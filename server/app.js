@@ -54,6 +54,8 @@ app.use(sessionRouter);
 import exercisesRouter from "./routers/exercisesRouter.js";
 app.use(exercisesRouter);
 
+import workoutsRouter from "./routers/workoutsRouter.js";
+app.use(workoutsRouter);
 
 const clientDist = path.join(__dirname, 'public');
 if (fs.existsSync(clientDist)) {

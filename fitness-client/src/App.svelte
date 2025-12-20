@@ -6,6 +6,7 @@
   import Login from './pages/Login/Login.svelte'; 
   import Dashboard from './pages/Dashboard/Dashboard.svelte';
   import Exercises from './pages/Exercises/Exercises.svelte';
+  import Workouts from './pages/Workouts/Workouts.svelte';
   import PrivateRoute from './lib/PrivateRoute.svelte';
   import fitnessLogo from '/fitness_favicon.png';
   import toastr from 'toastr';
@@ -44,6 +45,7 @@
         <nav>
           {#if $user !== undefined && $user !== null}
             <Link to="/dashboard">Dashboard</Link>
+            <Link to="/workouts">Workouts</Link>
           {:else}
             <Link to="/login">Login</Link>
             <Link to="/register">Register</Link>
@@ -63,6 +65,7 @@
       <Dashboard />
     </PrivateRoute>
     <Route path="/exercises"><Exercises /></Route>
+    <Route path="/workouts"><Workouts /></Route>
     <Route path="/login"><Login /></Route>
     <Route path="/register"><Register /></Route>
     <Route path="/" exact>

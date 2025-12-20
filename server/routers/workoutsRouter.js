@@ -1,0 +1,116 @@
+import { Router } from "express";
+import supabase from "../util/supabaseUtil.js";
+
+const router = Router();
+
+// POST /api/workouts
+router.post("/api/workouts", async (req, res) => {
+  const {
+    user_id, // Integer (e.g., 6)
+    title,
+    start_time,
+    end_time,
+    description,
+    exercises // Array of exercises with sets
+  } = req.body;
+
+  if (!user_id || !title || !start_time) {
+    return res.status(400).send({ 
+      error: "Missing required fields: user_id, title, start_time" 
+    });
+  }
+
+  try {
+    // 1. Create Workout
+    const { data: workout, error: workoutError } = await supabase
+      .from("workouts")
+      .insert([{
+        user_id: user_id,
+        title,
+        start_time,
+        end_time,
+        description
+      }])
+      .select()
+      .single();
+
+    if (workoutError) throw workoutError;
+    const workoutId = workout.id;
+
+    // 2. Loop Exercises
+    if (exercises && exercises.length > 0) {
+      for (const exercise of exercises) {
+        
+        // A. Insert Workout_Exercise Link
+        const { data: workoutExercise, error: weError } = await supabase
+          .from("workout_exercises")
+          .insert([{
+            workout_id: workoutId,
+            exercise_id: exercise.exercise_id, 
+            notes: exercise.notes || ""
+          }])
+          .select()
+          .single();
+
+        if (weError) throw weError;
+
+        // B. Insert Sets (No RPE/Distance/Seconds)
+        if (exercise.sets && exercise.sets.length > 0) {
+          const setsPayload = exercise.sets.map((set, index) => ({
+            workout_exercise_id: workoutExercise.id,
+            set_index: index,
+            set_type: set.set_type || 'normal',
+            weight_kg: set.weight_kg || 0,
+            reps: set.reps || 0
+          }));
+
+          const { error: setsError } = await supabase
+            .from("sets")
+            .insert(setsPayload);
+
+          if (setsError) throw setsError;
+        }
+      }
+    }
+
+    res.status(201).send({ 
+      message: "Workout created successfully", 
+      workout_id: workoutId 
+    });
+
+  } catch (error) {
+    console.error("Error creating workout:", error);
+    res.status(500).send({ error: error.message || "Internal Server Error" });
+  }
+});
+
+router.get("/api/workouts/:userId", async (req, res) => {
+  const { userId } = req.params;
+
+  const { data, error } = await supabase
+    .from("workouts")
+    .select(`
+      id,
+      title,
+      start_time,
+      end_time,
+      description,
+      workout_exercises (
+        id,
+        notes,
+        exercises ( id, name, equipment, image_url ), 
+        sets ( weight_kg, reps, set_type, set_index )
+      )
+    `)
+    .eq("user_id", userId)
+    .order("start_time", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    return res.status(500).send({ error: "Could not fetch workouts" });
+  }
+
+  res.send({ data });
+});
+
+export default router;
