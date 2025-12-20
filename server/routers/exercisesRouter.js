@@ -44,4 +44,20 @@ router.post("/api/exercises", async (req, res) => {
   }
 });
 
+router.get("/api/exercises", async (req, res) => {
+  try {
+    const { data, error } = await supabase.from("exercises").select("*");
+
+    if (error) {
+      console.error(error);
+      return res.status(500).send({ error: "Could not fetch exercises" });
+    }
+
+    res.status(200).send({ data: data });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: "Internal server error" });
+  }
+});
+
 export default router;
