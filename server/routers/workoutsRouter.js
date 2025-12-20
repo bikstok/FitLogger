@@ -1,5 +1,6 @@
 import { Router } from "express";
 import supabase from "../util/supabaseUtil.js";
+import { calculateDuration, calculateTotalVolume } from "../util/workoutUtils.js";
 
 const router = Router();
 
@@ -109,7 +110,15 @@ router.get("/api/workouts/:userId", async (req, res) => {
       return res.status(500).send({ error: "Could not fetch workouts" });
     }
 
-    res.status(200).send({ data: data });
+    // Calculate derived fields (Volume & Duration) on the server
+    const enrichedData = data.map((workout) => {
+      const duration = calculateDuration(workout.start_time, workout.end_time);
+      const total_volume = calculateTotalVolume(workout.workout_exercises);
+
+      return { ...workout, duration, total_volume };
+    });
+
+    res.status(200).send({ data: enrichedData });
   } catch (error) {
     console.error(error);
     return res.status(500).send({ error: "Internal server error" });

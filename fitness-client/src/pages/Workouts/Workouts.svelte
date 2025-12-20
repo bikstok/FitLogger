@@ -61,30 +61,6 @@
 		});
 	}
 
-	function getDuration(start, end) {
-		if (!start || !end) return '';
-		const diff = new Date(end) - new Date(start);
-		const minutes = Math.floor(diff / 60000);
-		const hours = Math.floor(minutes / 60);
-		const mins = minutes % 60;
-		if (hours > 0) return `${hours}h ${mins}m`;
-		return `${mins}m`;
-	}
-
-	function getVolume(workout) {
-		let total = 0;
-		if (workout.workout_exercises) {
-			for (const ex of workout.workout_exercises) {
-				if (ex.sets) {
-					for (const set of ex.sets) {
-						total += (set.weight_kg || 0) * (set.reps || 0);
-					}
-				}
-			}
-		}
-		return total.toLocaleString();
-	}
-
 	function openWorkout(workout) {
 		selectedWorkout = workout;
 	}
@@ -148,11 +124,11 @@
 						<div class="workout-stats">
 							<div class="stat">
 								<span class="stat-label">Duration</span>
-								<span class="stat-value">{getDuration(workout.start_time, workout.end_time)}</span>
+								<span class="stat-value">{workout.duration}</span>
 							</div>
 							<div class="stat">
 								<span class="stat-label">Volume</span>
-								<span class="stat-value">{getVolume(workout)} kg</span>
+								<span class="stat-value">{workout.total_volume.toLocaleString()} kg</span>
 							</div>
 						</div>
 					</div>
@@ -185,9 +161,9 @@
 					<div class="modal-meta">
 						<span>{formatDate(selectedWorkout.start_time)}</span>
 						<span>•</span>
-						<span>{getDuration(selectedWorkout.start_time, selectedWorkout.end_time)}</span>
+						<span>{selectedWorkout.duration}</span>
 						<span>•</span>
-						<span>{getVolume(selectedWorkout)} kg</span>
+						<span>{selectedWorkout.total_volume.toLocaleString()} kg</span>
 					</div>
 				</div>
 				<div class="modal-body">
