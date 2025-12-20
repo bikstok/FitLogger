@@ -3,8 +3,8 @@
   import toastr from "toastr";
   import { loadSession } from '../../lib/stores/authStore.js';
 
-  let email = "";
-  let password = "";
+  let email = "abekat@gmail.com";
+  let password = "abekat123";
 
   async function handleLogin() {
     if (!email || !password) {

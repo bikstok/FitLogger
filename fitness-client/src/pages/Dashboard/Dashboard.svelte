@@ -1,5 +1,6 @@
 <script>
 	import { user } from '../../lib/stores/authStore.js';
+	import { Link } from 'svelte-routing';
 </script>
 
 <main>
@@ -13,8 +14,13 @@
 	{:else}
 		<h1>Logged in successfully</h1>
 		<p>Your user id: <strong>{$user.id}</strong></p>
+		<p>
+			<Link to="/exercises">View Exercises</Link>
+		</p>
 	{/if}
 </main>
+
+
 
 <style>
 	main {
@@ -45,4 +51,3 @@
 		text-decoration: underline;
 	}
 </style>
-

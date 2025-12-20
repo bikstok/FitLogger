@@ -5,6 +5,7 @@
   import Register from './pages/Register/Register.svelte';
   import Login from './pages/Login/Login.svelte'; 
   import Dashboard from './pages/Dashboard/Dashboard.svelte';
+  import Exercises from './pages/Exercises/Exercises.svelte';
   import PrivateRoute from './lib/PrivateRoute.svelte';
   import fitnessLogo from '/fitness_favicon.png';
   import toastr from 'toastr';
@@ -61,6 +62,7 @@
     <PrivateRoute path="/dashboard" exact>
       <Dashboard />
     </PrivateRoute>
+    <Route path="/exercises"><Exercises /></Route>
     <Route path="/login"><Login /></Route>
     <Route path="/register"><Register /></Route>
     <Route path="/" exact>
@@ -132,4 +134,3 @@
     padding: 2em;
   }
 </style>
-

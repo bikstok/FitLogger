@@ -13,10 +13,9 @@ const __dirname = path.dirname(__filename);
 
 import cors from "cors";
 
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
 app.use(
   cors({
-    origin: FRONTEND_ORIGIN,
+    origin: "http://localhost:5173",
     credentials: true,
   })
 );
@@ -29,11 +28,9 @@ app.use(
     resave: false,
     saveUninitialized: true,
     cookie: {
-      // In production (HTTPS) set secure=true. During local/docker development you
-      // likely will not use TLS so set secure based on NODE_ENV.
-      secure: process.env.NODE_ENV === 'production',
+      secure: false,
       httpOnly: true,
-      sameSite: process.env.SESSION_SAME_SITE || 'lax',
+      sameSite: "lax",
     },
   })
 );

@@ -40,9 +40,12 @@
 			{#each exercises as exercise (exercise.id)}
 				<div class="card">
 					{#if exercise.image_url}
-						<img src={exercise.image_url} alt={exercise.name} />
+						<video controls muted loop autoplay playsinline>
+							<source src={`/exercise_videos/${exercise.image_url}`} type="video/mp4" />
+							Your browser does not support the video tag.
+						</video>
 					{:else}
-						<div class="placeholder">No Image</div>
+						<div class="placeholder">No Video</div>
 					{/if}
 					<div class="details">
 						<h2>{exercise.name}</h2>
@@ -89,7 +92,7 @@
 		transform: translateY(-2px);
 	}
 
-	img, .placeholder {
+	video, .placeholder {
 		width: 100%;
 		height: 200px;
 		object-fit: cover;
@@ -110,6 +113,7 @@
 	h2 {
 		margin: 0 0 0.5rem 0;
 		font-size: 1.2rem;
+		color: #666;
 	}
 
 	p {
