@@ -2,6 +2,7 @@
 	let exercises = $state([]);
 	let error = $state(null);
 	let loading = $state(true);
+	let searchQuery = $state("");
 
 	$effect(() => {
 		async function fetchExercises() {
@@ -24,20 +25,34 @@
 
 		fetchExercises();
 	});
+
+	let filteredExercises = $derived(
+		exercises.filter((exercise) =>
+			exercise.name.toLowerCase().includes(searchQuery.toLowerCase())
+		)
+	);
 </script>
 
 <div class="page">
 	<h1>Exercises</h1>
 
+	<div class="search-container">
+		<input 
+			type="text" 
+			placeholder="Search exercises..." 
+			bind:value={searchQuery} 
+		/>
+	</div>
+
 	{#if loading}
 		<p class="loading">Loading exercises...</p>
 	{:else if error}
 		<p class="error">{error}</p>
-	{:else if exercises.length === 0}
+	{:else if filteredExercises.length === 0}
 		<p>No exercises found.</p>
 	{:else}
 		<div class="grid">
-			{#each exercises as exercise (exercise.id)}
+			{#each filteredExercises as exercise (exercise.id)}
 				<div class="card">
 					{#if exercise.image_url}
 						<video controls muted loop autoplay playsinline>
@@ -71,6 +86,21 @@
 	h1 {
 		text-align: center;
 		margin-bottom: 2rem;
+	}
+
+	.search-container {
+		display: flex;
+		justify-content: center;
+		margin-bottom: 2rem;
+	}
+
+	input {
+		padding: 0.8rem;
+		width: 100%;
+		max-width: 400px;
+		border: 1px solid #ddd;
+		border-radius: 8px;
+		font-size: 1rem;
 	}
 
 	.grid {
