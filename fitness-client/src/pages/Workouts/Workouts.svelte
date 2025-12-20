@@ -53,6 +53,7 @@
 		if (!dateString) return '';
 		return new Date(dateString).toLocaleString('en-US', {
 			weekday: 'short',
+			year: 'numeric',
 			month: 'short',
 			day: 'numeric',
 			hour: '2-digit',
@@ -303,7 +304,7 @@
 	}
 
 	.modal-header { padding: 1.5rem; border-bottom: 1px solid #eee; }
-	.modal-header h2 { margin: 0 0 0.5rem 0; }
+	.modal-header h2 { margin: 0 0 0.5rem 0; color: #333; }
 	.modal-meta { color: #666; font-size: 0.9rem; display: flex; gap: 0.5rem; }
 	.modal-body { padding: 0; }
 
