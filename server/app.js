@@ -54,6 +54,9 @@ app.use(logoutRouter);
 import sessionRouter from "./routers/sessionRouter.js";
 app.use(sessionRouter);
 
+import exercisesRouter from "./routers/exercisesRouter.js";
+app.use(exercisesRouter);
+
 
 const clientDist = path.join(__dirname, 'public');
 if (fs.existsSync(clientDist)) {
