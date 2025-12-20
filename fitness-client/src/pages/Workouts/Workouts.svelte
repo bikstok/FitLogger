@@ -4,26 +4,50 @@
 	let error = $state(null);
 	let loading = $state(true);
 	let selectedWorkout = $state(null);
+	
+	// Pagination state
+	let offset = $state(0);
+	let hasMore = $state(true);
+	let isFetching = $state(false);
+
+	async function fetchWorkouts() {
+		if (!$user || isFetching || !hasMore) return;
+		
+		isFetching = true;
+		try {
+			const response = await fetch(`http://localhost:8080/api/workouts/${$user.id}?limit=10&offset=${offset}`);
+			if (!response.ok) {
+				throw new Error('Failed to fetch workouts');
+			}
+			const result = await response.json();
+			const newWorkouts = result.data;
+
+			if (newWorkouts.length < 10) {
+				hasMore = false;
+			}
+
+			workouts = [...workouts, ...newWorkouts];
+			offset += 10;
+		} catch (err) {
+			error = err.message;
+		} finally {
+			loading = false;
+			isFetching = false;
+		}
+	}
 
 	$effect(() => {
-		if (!$user) return;
-
-		async function fetchWorkouts() {
-			try {
-				const response = await fetch(`http://localhost:8080/api/workouts/${$user.id}`);
-				if (!response.ok) {
-					throw new Error('Failed to fetch workouts');
-				}
-				const result = await response.json();
-				workouts = result.data;
-			} catch (err) {
-				error = err.message;
-			} finally {
-				loading = false;
-			}
+		// Initial load
+		if ($user && workouts.length === 0 && !isFetching) {
+			fetchWorkouts();
 		}
-		fetchWorkouts();
 	});
+
+	function handleScroll() {
+		if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200) {
+			fetchWorkouts();
+		}
+	}
 
 	function formatDate(dateString) {
 		if (!dateString) return '';
@@ -98,6 +122,8 @@
 	{/each}
 {/snippet}
 
+<svelte:window onscroll={handleScroll} />
+
 <div class="page">
 	<h1>Past Workouts</h1>
 
@@ -142,6 +168,9 @@
 				</div>
 			{/each}
 		</div>
+		{#if isFetching}
+			<p class="loading">Loading more...</p>
+		{/if}
 	{/if}
 
 	{#if selectedWorkout}

@@ -86,31 +86,34 @@ router.post("/api/workouts", async (req, res) => {
 
 router.get("/api/workouts/:userId", async (req, res) => {
   const { userId } = req.params;
+  const limit = parseInt(req.query.limit) || 10;
+  const offset = parseInt(req.query.offset) || 0;
 
-  const { data, error } = await supabase
-    .from("workouts")
-    .select(`
-      id,
-      title,
-      start_time,
-      end_time,
-      description,
-      workout_exercises (
-        id,
-        notes,
-        exercises ( id, name, equipment, image_url ), 
-        sets ( weight_kg, reps, set_type, set_index )
-      )
-    `)
-    .eq("user_id", userId)
-    .order("start_time", { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from("workouts")
+      .select(`
+        *,
+        workout_exercises (
+          *,
+          sets (*),
+          exercises (*)
+        )
+      `)
+      .eq("user_id", userId)
+      .order("start_time", { ascending: false })
+      .range(offset, offset + limit - 1);
 
-  if (error) {
+    if (error) {
+      console.error(error);
+      return res.status(500).send({ error: "Could not fetch workouts" });
+    }
+
+    res.status(200).send({ data: data });
+  } catch (error) {
     console.error(error);
-    return res.status(500).send({ error: "Could not fetch workouts" });
+    return res.status(500).send({ error: "Internal server error" });
   }
-
-  res.send({ data });
 });
 
 export default router;

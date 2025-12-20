@@ -2,10 +2,11 @@ import fs from 'fs';
 import csv from 'csv-parser';
 import fetch from 'node-fetch'; 
 
-const FILE_PATH = './hevy_workouts.csv'; 
+const FILE_PATH = './hevy2.csv'; 
 const API_URL = 'http://localhost:8080/api/workouts';
 const USER_ID = 8; 
 
+// Full Exercise Map
 const exerciseMap = {
   'Shoulder Press (Dumbbell)': 1, 'Lat Pulldown (Cable)': 2, 'Bench Press (Smith Machine)': 3,
   'Bench Press (Barbell)': 4, 'Bench Press (Dumbbell)': 5, 'Seated Cable Row - V Grip (Cable)': 6,
@@ -28,49 +29,51 @@ const exerciseMap = {
   'Lateral Raise (Dumbbell)': 56, 'Bicep Curl (Cable)': 57, 'Standing Calf Raise (Smith)': 58
 };
 
-// Helper: Convert "18/12/2025 14.09" -> "2025-12-18 14:09:00"
-function formatDate(dateStr) {
+// Helper: Parse "18 Dec 2025, 12:34" -> "2025-12-18 12:34:00"
+function parseHevyDate(dateStr) {
   if (!dateStr) return null;
   
-  // If it's already standard ISO (YYYY-MM-DD...), leave it
-  if (dateStr.includes('-') && dateStr.includes(':')) return dateStr;
+  const monthMap = {
+    'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
+    'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+  };
 
   try {
-    // Expected format: "DD/MM/YYYY HH.MM"
-    const [datePart, timePart] = dateStr.split(' ');
-    const [day, month, year] = datePart.split('/');
-    let [hour, minute] = timePart.split('.');
+    // Remove commas and split: "18 Dec 2025 12:34" -> ["18", "Dec", "2025", "12:34"]
+    const cleanStr = dateStr.replace(/,/g, ''); 
+    const parts = cleanStr.split(' ');
     
-    // Safety check for seconds (sometimes missing)
-    if (!minute) minute = '00';
-    
-    return `${year}-${month}-${day} ${hour}:${minute}:00`;
+    if (parts.length < 4) return null; // Invalid format
+
+    const day = parts[0].padStart(2, '0');
+    const month = monthMap[parts[1]];
+    const year = parts[2];
+    const time = parts[3]; // "12:34"
+
+    if (!month) return null;
+
+    return `${year}-${month}-${day} ${time}:00`;
   } catch (e) {
-    console.warn(`Warning: Could not parse date "${dateStr}". Sending as-is.`);
-    return dateStr;
+    console.warn(`Could not parse date: ${dateStr}`);
+    return null;
   }
 }
 
 async function processAndSeed() {
   const workoutsMap = new Map();
 
-  // 1. Detect Separator
-  let fileContent = fs.readFileSync(FILE_PATH, { encoding: 'utf-8', start: 0, end: 500 });
-  const separator = fileContent.includes(';') ? ';' : ',';
-  console.log(`Using separator: "${separator}"`);
+  console.log(`Reading ${FILE_PATH}...`);
 
   fs.createReadStream(FILE_PATH)
-    .pipe(csv({ 
-        separator: separator,
-        mapHeaders: ({ header }) => header.trim() 
-    }))
+    .pipe(csv())
     .on('data', (row) => {
-      // 2. Fix the Date Format here
       const rawStart = row.start_time;
       if (!rawStart) return;
 
-      const formattedStart = formatDate(rawStart);
-      const formattedEnd = formatDate(row.end_time);
+      const formattedStart = parseHevyDate(rawStart);
+      const formattedEnd = parseHevyDate(row.end_time);
+
+      if (!formattedStart) return; // Skip if date couldn't be parsed
 
       if (!workoutsMap.has(formattedStart)) {
         workoutsMap.set(formattedStart, {
@@ -78,7 +81,7 @@ async function processAndSeed() {
           title: row.title,
           start_time: formattedStart,
           end_time: formattedEnd,
-          description: row.description && row.description !== 'nan' ? row.description : "",
+          description: row.description || "",
           exercisesMap: new Map() 
         });
       }
@@ -92,17 +95,18 @@ async function processAndSeed() {
       if (!workout.exercisesMap.has(exerciseId)) {
         workout.exercisesMap.set(exerciseId, {
           exercise_id: exerciseId,
-          notes: row.exercise_notes && row.exercise_notes !== 'nan' ? row.exercise_notes : "",
+          notes: row.exercise_notes || "",
           sets: []
         });
       }
 
       const exercise = workout.exercisesMap.get(exerciseId);
       
+      // Robust float cleaner for "4,75" or "4.75"
       const cleanFloat = (val) => {
           if (!val) return 0;
           if (typeof val === 'number') return val;
-          // Handle "20,5" -> 20.5
+          // Replace comma with dot, remove quotes if any remain
           return parseFloat(String(val).replace(',', '.')) || 0;
       };
 
@@ -114,13 +118,15 @@ async function processAndSeed() {
       });
     })
     .on('end', async () => {
-      console.log('Parsing complete. Uploading...');
+      console.log('Parsing complete. Preparing upload...');
       
       const workoutsPayload = Array.from(workoutsMap.values()).map(w => ({
         ...w,
         exercises: Array.from(w.exercisesMap.values())
       }));
 
+      console.log(`Found ${workoutsPayload.length} workouts. Uploading...`);
+      
       let success = 0;
       let fail = 0;
 
@@ -136,20 +142,15 @@ async function processAndSeed() {
             process.stdout.write('.');
             success++;
           } else {
-             // Print error only for first few failures to avoid spam
-             if (fail < 3) {
-                 const txt = await res.text();
-                 console.error(`\nFailed: ${txt}`);
-             } else {
-                 process.stdout.write('x');
-             }
              fail++;
+             const txt = await res.text();
+             if (fail <= 1) console.error(`\nFirst Failure: ${txt}`); // Show error for first fail only
           }
         } catch (e) {
             fail++;
         }
       }
-      console.log(`\n\nSuccess: ${success}, Failed: ${fail}`);
+      console.log(`\n\nDone! Success: ${success}, Failed: ${fail}`);
     });
 }
 
