@@ -3,6 +3,8 @@
 	let error = $state(null);
 	let loading = $state(true);
 	let searchQuery = $state("");
+	let selectedMuscleGroup = $state("");
+	let selectedEquipment = $state("");
 
 	$effect(() => {
 		async function fetchExercises() {
@@ -26,10 +28,21 @@
 		fetchExercises();
 	});
 
+	let muscleGroups = $derived(
+		[...new Set(exercises.map((e) => e.primary_muscle_group))].sort()
+	);
+
+	let equipmentList = $derived(
+		[...new Set(exercises.map((e) => e.equipment))].sort()
+	);
+
 	let filteredExercises = $derived(
-		exercises.filter((exercise) =>
-			exercise.name.toLowerCase().includes(searchQuery.toLowerCase())
-		)
+		exercises.filter((exercise) => {
+			const matchesSearch = exercise.name.toLowerCase().includes(searchQuery.toLowerCase());
+			const matchesGroup = selectedMuscleGroup === "" || exercise.primary_muscle_group === selectedMuscleGroup;
+			const matchesEquipment = selectedEquipment === "" || exercise.equipment === selectedEquipment;
+			return matchesSearch && matchesGroup && matchesEquipment;
+		})
 	);
 </script>
 
@@ -42,6 +55,18 @@
 			placeholder="Search exercises..." 
 			bind:value={searchQuery} 
 		/>
+		<select bind:value={selectedMuscleGroup}>
+			<option value="">All Muscle Groups</option>
+			{#each muscleGroups as group}
+				<option value={group}>{group}</option>
+			{/each}
+		</select>
+		<select bind:value={selectedEquipment}>
+			<option value="">All Equipment</option>
+			{#each equipmentList as item}
+				<option value={item}>{item}</option>
+			{/each}
+		</select>
 	</div>
 
 	{#if loading}
@@ -91,10 +116,11 @@
 	.search-container {
 		display: flex;
 		justify-content: center;
+		gap: 1rem;
 		margin-bottom: 2rem;
 	}
 
-	input {
+	input, select {
 		padding: 0.8rem;
 		width: 100%;
 		max-width: 400px;
