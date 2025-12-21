@@ -28,6 +28,26 @@
         // Navigate to CreateWorkout with the routine ID to pre-fill data
         navigate(`/create-workout?routineId=${routineId}`);
     }
+
+    async function deleteRoutine(id) {
+        if (!confirm('Are you sure you want to delete this routine?')) return;
+        
+        try {
+            const res = await fetch(`http://localhost:8080/api/routines/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                routines = routines.filter(r => r.id !== id);
+                toastr.success("Routine deleted");
+            } else {
+                const result = await res.json();
+                toastr.error(result.error || "Failed to delete routine");
+            }
+        } catch (e) {
+            toastr.error("Network error");
+        }
+    }
 </script>
 
 <div class="page">
@@ -44,7 +64,10 @@
         <div class="grid">
             {#each routines as routine}
                 <div class="card">
-                    <h2>{routine.name}</h2>
+                    <div class="card-header">
+                        <h2>{routine.name}</h2>
+                        <button class="btn-delete" onclick={() => deleteRoutine(routine.id)} title="Delete Routine">&times;</button>
+                    </div>
                     {#if routine.description}
                         <p class="desc">{routine.description}</p>
                     {/if}
@@ -65,6 +88,7 @@
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
     .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
     .card { background: white; padding: 1.5rem; border-radius: 8px; border: 1px solid #eee; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
     h2 { margin: 0 0 0.5rem 0; color: #333; }
     .desc { color: #666; font-size: 0.9rem; margin-bottom: 1rem; }
     .exercises-preview { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; }
@@ -72,4 +96,6 @@
     .btn-primary { background: #4f46e5; color: white; padding: 0.6rem 1.2rem; border-radius: 6px; text-decoration: none; font-weight: 500; }
     .btn-start { width: 100%; background: #10b981; color: white; border: none; padding: 0.8rem; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 1rem; }
     .btn-start:hover { background: #059669; }
+    .btn-delete { background: none; border: none; font-size: 1.5rem; color: #999; cursor: pointer; padding: 0; line-height: 1; }
+    .btn-delete:hover { color: #ef4444; }
 </style>

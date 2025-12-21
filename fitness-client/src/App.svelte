@@ -8,6 +8,7 @@
   import Exercises from './pages/Exercises/Exercises.svelte';
   import Workouts from './pages/Workouts/Workouts.svelte';
   import CreateRoutine from './pages/CreateRoutine/CreateRoutine.svelte';
+  import CreateWorkout from './pages/CreateWorkout/CreateWorkout.svelte';
   import MyRoutines from './pages/MyRoutines/MyRoutines.svelte';
   import PrivateRoute from './lib/PrivateRoute.svelte';
   import fitnessLogo from '/fitness_favicon.png';
@@ -71,6 +72,7 @@
     <Route path="/exercises"><Exercises /></Route>
     <Route path="/workouts"><Workouts /></Route>
     <Route path="/create-routine"><CreateRoutine /></Route>
+    <Route path="/create-workout"><CreateWorkout /></Route>
     <Route path="/my-routines"><MyRoutines /></Route>
     <Route path="/login"><Login /></Route>
     <Route path="/register"><Register /></Route>
