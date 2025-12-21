@@ -1,5 +1,6 @@
 <script>
 	import { user } from '../../lib/stores/authStore.js';
+	import toastr from "toastr";
 	let workouts = $state([]);
 	let error = $state(null);
 	let loading = $state(true);
@@ -67,6 +68,22 @@
 
 	function closeWorkout() {
 		selectedWorkout = null;
+	}
+
+	async function deleteWorkout(id) {
+		try {
+			const response = await fetch(`http://localhost:8080/api/workouts/${id}`, {
+				method: 'DELETE'
+			});
+
+			if (!response.ok) throw new Error('Failed to delete workout');
+
+			workouts = workouts.filter(w => w.id !== id);
+			closeWorkout();
+			toastr.success("Workout deleted successfully");
+		} catch (error) {
+			toastr.error(error.message || "An error occurred while deleting the workout.");
+		}
 	}
 </script>
 
@@ -168,6 +185,11 @@
 				</div>
 				<div class="modal-body">
 					{@render exerciseList(selectedWorkout.workout_exercises)}
+					<div class="modal-actions">
+						<button class="delete-btn" onclick={() => deleteWorkout(selectedWorkout.id)}>
+							Delete Workout
+						</button>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -283,5 +305,26 @@
 	.modal-header h2 { margin: 0 0 0.5rem 0; color: #333; }
 	.modal-meta { color: #666; font-size: 0.9rem; display: flex; gap: 0.5rem; }
 	.modal-body { padding: 0; }
+	
+	.modal-actions {
+		padding: 1rem;
+		display: flex;
+		justify-content: flex-end;
+		border-top: 1px solid #eee;
+	}
 
+	.delete-btn {
+		background-color: #fee2e2;
+		color: #dc2626;
+		border: none;
+		padding: 0.5rem 1rem;
+		border-radius: 6px;
+		cursor: pointer;
+		font-weight: 500;
+		transition: background-color 0.2s;
+	}
+
+	.delete-btn:hover {
+		background-color: #fecaca;
+	}
 </style>
