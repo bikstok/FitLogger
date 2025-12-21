@@ -1,6 +1,7 @@
 <script>
 	import { user } from '../../lib/stores/authStore.js';
 	import toastr from "toastr";
+	import { Link } from "svelte-routing";
 	let workouts = $state([]);
 	let error = $state(null);
 	let loading = $state(true);
@@ -119,7 +120,9 @@
 <svelte:window onscroll={handleScroll} />
 
 <div class="page">
-	<h1>Past Workouts</h1>
+	<div class="header">
+		<h1>Past Workouts</h1>
+	</div>
 
 	{#if loading}
 		<p class="loading">Loading workouts...</p>
@@ -203,7 +206,25 @@
 		padding: 1rem;
 	}
 
-	h1 { text-align: center; margin-bottom: 2rem; }
+	.header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 2rem;
+	}
+
+	h1 { margin: 0; }
+
+	.actions { display: flex; gap: 1rem; }
+
+	:global(.log-btn) {
+		background-color: #4f46e5; color: white; padding: 0.6rem 1.2rem; border-radius: 6px; text-decoration: none; font-weight: 500;
+	}
+
+	:global(.log-btn.secondary) {
+		background-color: #eef2ff; color: #4f46e5;
+	}
+
 	.loading, .error { text-align: center; color: #666; }
 	.error { color: red; }
 

@@ -14,9 +14,6 @@
 	{:else}
 		<h1>Logged in successfully</h1>
 		<p>Your user id: <strong>{$user.id}</strong></p>
-		<p>
-			<Link to="/exercises">View Exercises</Link>
-		</p>
 	{/if}
 </main>
 

@@ -1,0 +1,125 @@
+import { Router } from "express";
+import supabase from "../util/supabaseUtil.js";
+
+const router = Router();
+
+// POST /api/routines
+router.post("/api/routines", async (req, res) => {
+  const {
+    user_id,
+    name,
+    description,
+    exercises // Array of exercises with sets (template sets)
+  } = req.body;
+
+  if (!user_id || !name) {
+    return res.status(400).send({ 
+      error: "Missing required fields: user_id, name" 
+    });
+  }
+
+  try {
+    // 1. Create Routine
+    const { data: routine, error: routineError } = await supabase
+      .from("routines")
+      .insert([{
+        user_id,
+        name,
+        description
+      }])
+      .select()
+      .single();
+
+    if (routineError) throw routineError;
+    const routineId = routine.id;
+
+    // 2. Loop Exercises
+    if (exercises && exercises.length > 0) {
+      for (const [index, exercise] of exercises.entries()) {
+        
+        // A. Insert Routine_Exercise Link
+        const { data: routineExercise, error: reError } = await supabase
+          .from("routine_exercises")
+          .insert([{
+            routine_id: routineId,
+            exercise_id: exercise.exercise_id, 
+            order_index: index,
+            notes: exercise.notes || ""
+          }])
+          .select()
+          .single();
+
+        if (reError) throw reError;
+
+        // B. Insert Template Sets
+        if (exercise.sets && exercise.sets.length > 0) {
+          const setsPayload = exercise.sets.map((set, setIndex) => ({
+            routine_exercise_id: routineExercise.id,
+            set_index: setIndex,
+            set_type: set.set_type || 'normal',
+            target_reps: set.reps || 0,
+            target_weight_kg: set.weight_kg || 0
+          }));
+
+          const { error: setsError } = await supabase.from("routine_sets").insert(setsPayload);
+          if (setsError) throw setsError;
+        }
+      }
+    }
+
+    res.status(201).send({ message: "Routine created successfully", routine_id: routineId });
+  } catch (error) {
+    console.error("Error creating routine:", error);
+    res.status(500).send({ error: error.message || "Internal Server Error" });
+  }
+});
+
+// GET /api/routines/:userId
+router.get("/api/routines/:userId", async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const { data, error } = await supabase
+      .from("routines")
+      .select(`
+        *,
+        routine_exercises (
+          *,
+          exercises (*),
+          routine_sets (*)
+        )
+      `)
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    res.send({ data });
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+// GET /api/routines/detail/:id
+router.get("/api/routines/detail/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { data, error } = await supabase
+      .from("routines")
+      .select(`
+        *,
+        routine_exercises (
+          *,
+          exercises (*),
+          routine_sets (*)
+        )
+      `)
+      .eq("id", id)
+      .single();
+
+    if (error) throw error;
+    res.send({ data });
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+export default router;
