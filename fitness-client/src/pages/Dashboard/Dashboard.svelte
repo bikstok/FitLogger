@@ -3,6 +3,7 @@
     import { user } from '../../lib/stores/authStore.js';
     import Chart from 'chart.js/auto';
     import toastr from 'toastr';
+    import { fetchGet } from '../../util/fetchUtil.js';
 
     let barChartCanvas;
     let pieChartCanvas;
@@ -15,18 +16,15 @@
 
         try {
             const [weeklyRes, muscleRes] = await Promise.all([
-                fetch(`http://localhost:8080/api/stats/weekly-duration/${$user.id}`),
-                fetch(`http://localhost:8080/api/stats/muscle-distribution/${$user.id}`)
+                fetchGet(`/api/stats/weekly-duration/${$user.id}`),
+                fetchGet(`/api/stats/muscle-distribution/${$user.id}`)
             ]);
 
-            if (weeklyRes.ok && muscleRes.ok) {
-                const weeklyData = await weeklyRes.json();
-                const muscleData = await muscleRes.json();
-                
+            if (!weeklyRes.error && !muscleRes.error) {
                 loading = false;
                 await tick();
-                renderBarChart(weeklyData.data);
-                renderPieChart(muscleData.data);
+                renderBarChart(weeklyRes.data);
+                renderPieChart(muscleRes.data);
             } else {
                 toastr.error("Failed to load stats");
                 loading = false;

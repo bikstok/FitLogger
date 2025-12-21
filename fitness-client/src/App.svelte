@@ -13,15 +13,13 @@
   import PrivateRoute from './lib/PrivateRoute.svelte';
   import fitnessLogo from '/fitness_favicon.png';
   import toastr from 'toastr';
+  import { fetchPost } from './util/fetchUtil.js';
 
   async function handleLogout() {
     try {
-      const res = await fetch("http://localhost:8080/api/logout", {
-        method: "POST",
-        credentials: "include"
-      });
+      const result = await fetchPost("/api/logout", {});
 
-      if (res.ok) {
+      if (!result.error) {
         toastr.success("Logged out successfully");
         clearUser();
         navigate("/");

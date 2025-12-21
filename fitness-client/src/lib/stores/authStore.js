@@ -1,20 +1,13 @@
 import { writable } from "svelte/store";
+import { fetchGet } from "../../util/fetchUtil.js";
 
 export const user = writable(undefined);
 
 export async function loadSession() {
   try {
-    const res = await fetch("http://localhost:8080/api/session", {
-      credentials: "include",
-    });
+    const data = await fetchGet("/api/session");
 
-    if (!res.ok) {
-      user.set(null);
-      return null;
-    }
-
-    const data = await res.json();
-    if (data && data.user) {
+    if (!data.error && data.user) {
       user.set(data.user);
       return data.user;
     }

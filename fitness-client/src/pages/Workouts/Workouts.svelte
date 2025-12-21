@@ -2,6 +2,7 @@
 	import { user } from '../../lib/stores/authStore.js';
 	import toastr from "toastr";
 	import { Link } from "svelte-routing";
+	import { fetchGet, fetchDelete } from '../../util/fetchUtil.js';
 	let workouts = $state([]);
 	let error = $state(null);
 	let loading = $state(true);
@@ -17,11 +18,8 @@
 		
 		isFetching = true;
 		try {
-			const response = await fetch(`http://localhost:8080/api/workouts/${$user.id}?limit=10&offset=${offset}`);
-			if (!response.ok) {
-				throw new Error('Failed to fetch workouts');
-			}
-			const result = await response.json();
+			const result = await fetchGet(`/api/workouts/${$user.id}?limit=10&offset=${offset}`);
+			if (result.error) throw new Error(result.error);
 			const newWorkouts = result.data;
 
 			if (newWorkouts.length < 10) {
@@ -73,11 +71,8 @@
 
 	async function deleteWorkout(id) {
 		try {
-			const response = await fetch(`http://localhost:8080/api/workouts/${id}`, {
-				method: 'DELETE'
-			});
-
-			if (!response.ok) throw new Error('Failed to delete workout');
+			const result = await fetchDelete(`/api/workouts/${id}`);
+			if (result.error) throw new Error(result.error);
 
 			workouts = workouts.filter(w => w.id !== id);
 			closeWorkout();

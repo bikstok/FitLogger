@@ -3,6 +3,7 @@
 	import { user } from '../../lib/stores/authStore.js';
 	import { navigate } from 'svelte-routing';
 	import toastr from 'toastr';
+	import { fetchGet, fetchPost } from '../../util/fetchUtil.js';
 
 	let title = $state("New Workout");
 	let startTime = $state("");
@@ -20,8 +21,7 @@
 		startTime = localIso;
 		
 		try {
-			const res = await fetch('http://localhost:8080/api/exercises');
-			const result = await res.json();
+			const result = await fetchGet('/api/exercises');
 			availableExercises = result.data || [];
 		} catch (e) {
 			console.error(e);
@@ -34,10 +34,9 @@
 		
 		if (routineId) {
 			try {
-				const res = await fetch(`http://localhost:8080/api/routines/detail/${routineId}`);
-				const result = await res.json();
+				const result = await fetchGet(`/api/routines/detail/${routineId}`);
 				
-				if (res.ok && result.data) {
+				if (!result.error && result.data) {
 					const r = result.data;
 					title = r.name; // Pre-fill title with routine name
 					
@@ -117,18 +116,13 @@
 		};
 
 		try {
-			const res = await fetch('http://localhost:8080/api/workouts', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(payload)
-			});
+			const result = await fetchPost('/api/workouts', payload);
 			
-			if (res.ok) {
+			if (!result.error) {
 				toastr.success("Workout saved!");
 				navigate('/workouts');
 			} else {
-				const err = await res.json();
-				toastr.error(err.error || "Failed to save");
+				toastr.error(result.error || "Failed to save");
 			}
 		} catch (e) {
 			toastr.error("Network error");

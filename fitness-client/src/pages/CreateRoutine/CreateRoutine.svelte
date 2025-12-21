@@ -3,6 +3,7 @@
 	import { user } from '../../lib/stores/authStore.js';
 	import { navigate } from 'svelte-routing';
 	import toastr from 'toastr';
+	import { fetchGet, fetchPost } from '../../util/fetchUtil.js';
 
 	let name = $state("New Routine");
 	let description = $state("");
@@ -13,8 +14,7 @@
 
 	onMount(async () => {
 		try {
-			const res = await fetch('http://localhost:8080/api/exercises');
-			const result = await res.json();
+			const result = await fetchGet('/api/exercises');
 			availableExercises = result.data || [];
 		} catch (e) {
 			console.error(e);
@@ -79,18 +79,13 @@
 		};
 
 		try {
-			const res = await fetch('http://localhost:8080/api/routines', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(payload)
-			});
+			const result = await fetchPost('/api/routines', payload);
 			
-			if (res.ok) {
+			if (!result.error) {
 				toastr.success("Routine created successfully!");
-				navigate('/workouts'); // Or navigate to a "My Routines" page if it existed
+				navigate('/my-routines');
 			} else {
-				const err = await res.json();
-				toastr.error(err.error || "Failed to save routine");
+				toastr.error(result.error || "Failed to save routine");
 			}
 		} catch (e) {
 			toastr.error("Network error");

@@ -3,6 +3,7 @@
     import { user } from '../../lib/stores/authStore.js';
     import { Link, navigate } from 'svelte-routing';
     import toastr from 'toastr';
+    import { fetchGet, fetchDelete } from '../../util/fetchUtil.js';
 
     let routines = $state([]);
     let loading = $state(true);
@@ -10,9 +11,8 @@
     onMount(async () => {
         if (!$user) return;
         try {
-            const res = await fetch(`http://localhost:8080/api/routines/${$user.id}`);
-            const result = await res.json();
-            if (res.ok) {
+            const result = await fetchGet(`/api/routines/${$user.id}`);
+            if (!result.error) {
                 routines = result.data;
             } else {
                 toastr.error(result.error);
@@ -33,15 +33,12 @@
         if (!confirm('Are you sure you want to delete this routine?')) return;
         
         try {
-            const res = await fetch(`http://localhost:8080/api/routines/${id}`, {
-                method: 'DELETE'
-            });
+            const result = await fetchDelete(`/api/routines/${id}`);
 
-            if (res.ok) {
+            if (!result.error) {
                 routines = routines.filter(r => r.id !== id);
                 toastr.success("Routine deleted");
             } else {
-                const result = await res.json();
                 toastr.error(result.error || "Failed to delete routine");
             }
         } catch (e) {

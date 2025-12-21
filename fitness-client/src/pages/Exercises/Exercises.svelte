@@ -1,4 +1,5 @@
 <script>
+	import { fetchGet } from '../../util/fetchUtil.js';
 	let exercises = $state([]);
 	let error = $state(null);
 	let loading = $state(true);
@@ -10,13 +11,12 @@
 		async function fetchExercises() {
 			try {
 				// Fetching from the backend API
-				const response = await fetch('http://localhost:8080/api/exercises');
+				const result = await fetchGet('/api/exercises');
 				
-				if (!response.ok) {
-					throw new Error('Failed to fetch exercises');
+				if (result.error) {
+					throw new Error(result.error || 'Failed to fetch exercises');
 				}
 
-				const result = await response.json();
 				exercises = result.data;
 			} catch (err) {
 				error = err.message;
