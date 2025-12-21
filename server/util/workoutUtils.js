@@ -10,13 +10,20 @@ export function calculateDuration(startTime, endTime) {
 export function calculateTotalVolume(workoutExercises) {
   let totalVolume = 0;
   if (workoutExercises) {
-    workoutExercises.forEach((ex) => {
-      if (ex.sets) {
-        ex.sets.forEach((set) => {
+    workoutExercises.forEach((exercise) => {
+      if (exercise.sets) {
+        exercise.sets.forEach((set) => {
           totalVolume += (set.weight_kg || 0) * (set.reps || 0);
         });
       }
     });
   }
   return totalVolume;
+}
+
+export function getWeekNumber(d) {
+  d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
 }
