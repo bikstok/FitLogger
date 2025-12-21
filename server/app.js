@@ -57,6 +57,9 @@ app.use(exercisesRouter);
 import workoutsRouter from "./routers/workoutsRouter.js";
 app.use(workoutsRouter);
 
+import statisticsRouter from "./routers/statisticsRouter.js";
+app.use(statisticsRouter);
+
 import routinesRouter from "./routers/routinesRouter.js";
 app.use(routinesRouter);
 

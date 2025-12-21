@@ -1,6 +1,6 @@
 import { Router } from "express";
 import supabase from "../util/supabaseUtil.js";
-import { calculateDuration, calculateTotalVolume, getWeekNumber } from "../util/workoutUtils.js";
+import { calculateDuration, calculateTotalVolume } from "../util/workoutUtils.js";
 
 const router = Router();
 
@@ -140,66 +140,6 @@ router.delete("/api/workouts/:id", async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).send({ error: "Internal server error" });
-  }
-});
-
-router.get("/api/stats/weekly-duration/:userId", async (req, res) => {
-  const { userId } = req.params;
-  
-  // 12 weeks ago from today
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - (12 * 7));
-
-  try {
-    const { data, error } = await supabase
-      .from("workouts")
-      .select("start_time, end_time")
-      .eq("user_id", userId)
-      .gte("start_time", startDate.toISOString());
-
-    if (error) throw error;
-
-    // Prepare buckets for last 12 weeks
-    const stats = [];
-    const now = new Date();
-    
-    // Align to current week's Monday for cleaner buckets
-    const currentMonday = new Date(now);
-    const day = currentMonday.getDay() || 7; 
-    currentMonday.setDate(currentMonday.getDate() - (day - 1));
-    currentMonday.setHours(0,0,0,0);
-
-    // Generate 12 buckets (11 weeks ago + current week)
-    for (let i = 11; i >= 0; i--) {
-        const start = new Date(currentMonday);
-        start.setDate(start.getDate() - (i * 7));
-        const end = new Date(start);
-        end.setDate(end.getDate() + 7);
-        
-        stats.push({
-            start,
-            end,
-            label: `Week ${getWeekNumber(start)}`,
-            hours: 0
-        });
-    }
-
-    // Fill buckets
-    data.forEach(w => {
-        if (!w.start_time || !w.end_time) return;
-        const wStart = new Date(w.start_time);
-        const duration = (new Date(w.end_time) - wStart) / (1000 * 60 * 60);
-        
-        const bucket = stats.find(s => wStart >= s.start && wStart < s.end);
-        if (bucket) {
-            bucket.hours += duration;
-        }
-    });
-
-    res.send({ data: stats });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send({ error: "Internal server error" });
   }
 });
 
