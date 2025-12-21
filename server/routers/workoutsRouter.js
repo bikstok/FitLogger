@@ -125,4 +125,22 @@ router.get("/api/workouts/:userId", async (req, res) => {
   }
 });
 
+router.delete("/api/workouts/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const { error } = await supabase.from("workouts").delete().eq("id", id);
+
+    if (error) {
+      console.error(error);
+      return res.status(500).send({ error: "Could not delete workout" });
+    }
+
+    res.status(200).send({ message: "Workout deleted" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: "Internal server error" });
+  }
+});
+
 export default router;
