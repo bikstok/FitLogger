@@ -1,9 +1,10 @@
 <script>
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { user } from '../../lib/stores/authStore.js';
 	import { navigate } from 'svelte-routing';
 	import toastr from 'toastr';
 	import { fetchGet, fetchPost } from '../../util/fetchUtil.js';
+	import { timer, formatTime } from '../../lib/stores/timerStore.js';
 
 	let title = $state("New Workout");
 	let startTime = $state("");
@@ -13,6 +14,10 @@
 	let availableExercises = $state([]);
 	let selectedExercises = $state([]); 
 	let selectedExerciseId = $state("");
+
+	onDestroy(() => {
+		timer.stop();
+	});
 
 	onMount(async () => {
 		const now = new Date();
@@ -46,7 +51,8 @@
 						name: re.exercises.name,
 						sets: re.routine_sets.map(rs => ({
 							weight_kg: rs.target_weight_kg,
-							reps: rs.target_reps
+							reps: rs.target_reps,
+							completed: false
 						}))
 					}));
 				}
@@ -63,7 +69,7 @@
 			selectedExercises = [...selectedExercises, {
 				exercise_id: exercise.id,
 				name: exercise.name,
-				sets: [{ weight_kg: 0, reps: 0 }]
+				sets: [{ weight_kg: 0, reps: 0, completed: false }]
 			}];
 			selectedExerciseId = "";
 		}
@@ -74,7 +80,7 @@
 		const ex = exercises[exerciseIndex];
 		// Copy previous set values for convenience
 		const lastSet = ex.sets[ex.sets.length - 1];
-		const newSet = lastSet ? { ...lastSet } : { weight_kg: 0, reps: 0 };
+		const newSet = lastSet ? { ...lastSet, completed: false } : { weight_kg: 0, reps: 0, completed: false };
 		
 		ex.sets.push(newSet);
 		selectedExercises = exercises;
@@ -94,6 +100,14 @@
 		const exercises = [...selectedExercises];
 		exercises[exIndex].sets[setIndex][field] = Number(value);
 		selectedExercises = exercises;
+	}
+
+	function toggleSetTimer(exIndex, setIndex, checked) {
+		const exercises = [...selectedExercises];
+		exercises[exIndex].sets[setIndex].completed = checked;
+		selectedExercises = exercises;
+
+		if (checked) timer.start();
 	}
 
 	async function saveWorkout() {
@@ -172,6 +186,7 @@
 				</div>
 				
 				<div class="sets-header">
+					<span></span>
 					<span>Set</span>
 					<span>kg</span>
 					<span>Reps</span>
@@ -180,6 +195,7 @@
 				
 				{#each ex.sets as set, j}
 					<div class="set-row">
+						<input type="checkbox" checked={set.completed} onchange={(e) => toggleSetTimer(i, j, e.target.checked)} />
 						<span class="set-num">{j + 1}</span>
 						<input type="number" value={set.weight_kg} oninput={(e) => updateSet(i, j, 'weight_kg', e.target.value)} />
 						<input type="number" value={set.reps} oninput={(e) => updateSet(i, j, 'reps', e.target.value)} />
@@ -195,6 +211,23 @@
 	<div class="actions">
 		<button class="btn-save" onclick={saveWorkout}>Save Workout</button>
 	</div>
+
+	{#if $timer.active}
+		<div class="timer-bar">
+			<div class="timer-display">
+				<span class="time">{formatTime($timer.seconds)}</span>
+				<span class="label">Rest Timer</span>
+			</div>
+			<div class="timer-controls">
+				<button class="btn-timer" onclick={() => timer.adjust(-15)}>-15s</button>
+				<button class="btn-timer" onclick={() => timer.adjust(15)}>+15s</button>
+				<button class="btn-timer stop" onclick={timer.stop}>Stop</button>
+			</div>
+			<div class="timer-settings">
+				<label>Default (s): <input type="number" value={$timer.defaultSeconds} oninput={(e) => timer.setDefault(Number(e.target.value))} class="default-input" /></label>
+			</div>
+		</div>
+	{/if}
 </div>
 
 <style>
@@ -212,7 +245,7 @@
 	.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
 	.card-header h3 { margin: 0; font-size: 1.1rem; color: #333; }
 	
-	.sets-header, .set-row { display: grid; grid-template-columns: 40px 1fr 1fr 40px; gap: 1rem; align-items: center; margin-bottom: 0.5rem; }
+	.sets-header, .set-row { display: grid; grid-template-columns: 30px 40px 1fr 1fr 40px; gap: 1rem; align-items: center; margin-bottom: 0.5rem; }
 	.sets-header { font-size: 0.85rem; color: #666; font-weight: 600; text-align: center; }
 	.set-num { text-align: center; color: #888; }
 	
@@ -224,4 +257,14 @@
 	.btn-icon:hover { color: #ef4444; }
 	
 	.actions { margin-top: 2rem; }
+
+	.timer-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #1f2937; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 -2px 10px rgba(0,0,0,0.2); z-index: 100; flex-wrap: wrap; gap: 1rem; }
+	.timer-display { display: flex; flex-direction: column; }
+	.timer-display .time { font-size: 1.5rem; font-weight: bold; font-family: monospace; }
+	.timer-display .label { font-size: 0.8rem; color: #9ca3af; }
+	.timer-controls { display: flex; gap: 0.5rem; }
+	.btn-timer { background: #374151; color: white; border: 1px solid #4b5563; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; }
+	.btn-timer:hover { background: #4b5563; }
+	.btn-timer.stop { background: #ef4444; border-color: #dc2626; }
+	.default-input { width: 60px; padding: 0.25rem; background: #374151; border: 1px solid #4b5563; color: white; border-radius: 4px; text-align: center; }
 </style>
