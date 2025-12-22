@@ -4,7 +4,9 @@ Work in progress Fitness Logging App.
 
 ### Add default routines
 
-### Add timer to workout log
+### Change the sound of the timer to an audio file
+
+### Make the checkmark in log workout turn green and the row turn green.
 
 ### Add stats
 
