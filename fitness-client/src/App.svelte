@@ -2,6 +2,7 @@
   import { Router, Link, Route, navigate } from "svelte-routing";
   import { onMount } from 'svelte';
   import { user, loadSession, clearUser } from './lib/stores/authStore.js';
+  import { theme } from './lib/stores/themeStore.js';
   import Register from './pages/Register/Register.svelte';
   import Login from './pages/Login/Login.svelte'; 
   import Dashboard from './pages/Dashboard/Dashboard.svelte';
@@ -12,6 +13,8 @@
   import MyRoutines from './pages/MyRoutines/MyRoutines.svelte';
   import PrivateRoute from './lib/PrivateRoute.svelte';
   import fitnessLogo from '/fitness_favicon.png';
+  import darkModeIcon from './assets/dark_mode.png';
+  import lightModeIcon from './assets/light_mode.png';
   import toastr from 'toastr';
   import { fetchPost } from './util/fetchUtil.js';
 
@@ -30,14 +33,22 @@
       toastr.error("Network error");
     }
   }
-  // Load session once for the whole app so `$user` becomes available
+
   onMount(() => {
     loadSession();
+    theme.init();
   });
 </script>
 
 <Router>
   <header>
+    <button class="theme-toggle" on:click={theme.toggle} title="Toggle Dark Mode">
+      {#if $theme}
+        <img src={lightModeIcon} class="icon" alt="Light Mode Logo" />
+      {:else}
+        <img src={darkModeIcon} class="icon" alt="Dark Mode Logo" />
+      {/if}
+    </button>
     <div class="nav-container">
       <div class="nav-left">
         <a href="/" class="logo-link">
@@ -87,7 +98,7 @@
     top: 0;
     left: 0;
     width: 100%;
-    background-color: #c5c7cf;
+    background-color: #ffffff;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     z-index: 1000;
   }
@@ -116,6 +127,12 @@
     filter: drop-shadow(0 0 0.8em #646cffaa);
   }
 
+  .icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+  }
+
   nav {
     display: flex;
     gap: 0.8em; /* tighter spacing between links */
@@ -141,5 +158,56 @@
     margin-left: auto;
     margin-right: auto;
     padding: 2em;
+  }
+
+  .theme-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    color: #333;
+    position: absolute;
+    left: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  /* Global Light Mode Styles (Default) */
+  :global(body) {
+    background-color: #f3f4f6;
+    color: #1f2937;
+    margin: 0;
+  }
+
+  /* Global Dark Mode Styles */
+  :global(body.dark-mode) {
+    background-color: #121212;
+    color: #e0e0e0;
+  }
+  :global(body.dark-mode) .theme-toggle {
+    color: #fbbf24;
+  }
+  :global(body.dark-mode) header {
+    background-color: #1f2937;
+    border-bottom: 1px solid #374151;
+  }
+  :global(body.dark-mode) .card,
+  :global(body.dark-mode) .workout-card,
+  :global(body.dark-mode) .exercise-card,
+  :global(body.dark-mode) .modal-content,
+  :global(body.dark-mode) .stats-container {
+    background-color: #1f2937;
+    border-color: #374151;
+    color: #e0e0e0;
+  }
+  :global(body.dark-mode) h1, :global(body.dark-mode) h2, :global(body.dark-mode) h3 {
+    color: #f3f4f6;
+  }
+  :global(body.dark-mode) input, :global(body.dark-mode) select {
+    background-color: #374151;
+    border-color: #4b5563;
+    color: white;
   }
 </style>
