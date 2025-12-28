@@ -17,6 +17,9 @@
   import lightModeIcon from './assets/light_mode.png';
   import toastr from 'toastr';
   import { fetchPost } from './util/fetchUtil.js';
+  import io from "socket.io-client";
+
+  let activeUsers = $state(0);
 
   async function handleLogout() {
     try {
@@ -37,18 +40,36 @@
   onMount(() => {
     loadSession();
     theme.init();
+
+    const socket = io("http://localhost:8080", {
+      withCredentials: true
+    });
+    socket.on("user_count", (count) => {
+      activeUsers = count;
+    });
+    socket.on("workout_created", (data) => {
+      if ($user?.id === data.user_id) return;
+      toastr.info(`${data.username} just finished a workout: ${data.title}`);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   });
 </script>
 
 <Router>
   <header>
-    <button class="theme-toggle" on:click={theme.toggle} title="Toggle Dark Mode">
+    <button class="theme-toggle" on:click={theme.toggle} title="Toggle Dark and Light Mode">
       {#if $theme}
         <img src={lightModeIcon} class="icon" alt="Light Mode Logo" />
       {:else}
         <img src={darkModeIcon} class="icon" alt="Dark Mode Logo" />
       {/if}
     </button>
+    <div class="active-users">
+      <span class="dot">●</span> {activeUsers} FitLogger Users Online
+    </div>
     <div class="nav-container">
       <div class="nav-left">
         <a href="/" class="logo-link">
@@ -174,6 +195,24 @@
     transform: translateY(-50%);
   }
 
+  .active-users {
+    position: absolute;
+    right: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #10b981;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .dot {
+    font-size: 0.8rem;
+    animation: pulse 2s infinite;
+  }
+
   /* Global Light Mode Styles (Default) */
   :global(body) {
     background-color: #f3f4f6;
@@ -209,5 +248,11 @@
     background-color: #374151;
     border-color: #4b5563;
     color: white;
+  }
+
+  @keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
   }
 </style>

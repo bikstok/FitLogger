@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "chart.js": "^4.5.1",
+    "socket.io-client": "^4.8.3",
     "svelte-routing": "^2.13.0",
     "toastr": "^2.1.4"
   }

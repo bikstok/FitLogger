@@ -1,18 +1,18 @@
 import { Router } from "express";
 import supabase from "../util/supabaseUtil.js";
 import { calculateDuration, calculateTotalVolume } from "../util/workoutUtils.js";
+import { emitWorkoutCreated } from "../util/socketUtil.js";
 
 const router = Router();
 
-// POST /api/workouts
 router.post("/api/workouts", async (req, res) => {
   const {
-    user_id, // Integer (e.g., 6)
+    user_id, 
     title,
     start_time,
     end_time,
     description,
-    exercises // Array of exercises with sets
+    exercises 
   } = req.body;
 
   if (!user_id || !title || !start_time) {
@@ -55,7 +55,7 @@ router.post("/api/workouts", async (req, res) => {
 
         if (weError) throw weError;
 
-        // B. Insert Sets (No RPE/Distance/Seconds)
+        // B. Insert Sets
         if (exercise.sets && exercise.sets.length > 0) {
           const setsPayload = exercise.sets.map((set, index) => ({
             workout_exercise_id: workoutExercise.id,
@@ -73,6 +73,9 @@ router.post("/api/workouts", async (req, res) => {
         }
       }
     }
+
+    // Send socket notification
+    await emitWorkoutCreated(req.io, user_id, title);
 
     res.status(201).send({ 
       message: "Workout created successfully", 
@@ -110,7 +113,6 @@ router.get("/api/workouts/:userId", async (req, res) => {
       return res.status(500).send({ error: "Could not fetch workouts" });
     }
 
-    // Calculate derived fields (Volume & Duration) on the server
     const enrichedData = data.map((workout) => {
       const duration = calculateDuration(workout.start_time, workout.end_time);
       const total_volume = calculateTotalVolume(workout.workout_exercises);
