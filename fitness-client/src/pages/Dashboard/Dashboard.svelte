@@ -7,8 +7,10 @@
 
     let barChartCanvas;
     let pieChartCanvas;
+    let frequencyChartCanvas;
     let barChart;
     let pieChart;
+    let frequencyChart;
     let loading = $state(true);
     let timeRange = $state("3m");
 
@@ -22,9 +24,10 @@
 
     async function updateStats() {
         if (!$user) return;
-        const [durationRes, muscleRes] = await Promise.all([
+        const [durationRes, muscleRes, freqRes] = await Promise.all([
             fetchGet(`/api/stats/weekly-duration/${$user.id}?range=${timeRange}`),
-            fetchGet(`/api/stats/muscle-distribution/${$user.id}?range=${timeRange}`)
+            fetchGet(`/api/stats/muscle-distribution/${$user.id}?range=${timeRange}`),
+            fetchGet(`/api/stats/workout-frequency/${$user.id}?range=${timeRange}`)
         ]);
         
         if (!durationRes.error && barChart) {
@@ -37,22 +40,29 @@
             pieChart.data.datasets[0].data = muscleRes.data.values;
             pieChart.update();
         }
+        if (!freqRes.error && frequencyChart) {
+            frequencyChart.data.labels = freqRes.data.map(d => d.label);
+            frequencyChart.data.datasets[0].data = freqRes.data.map(d => d.count);
+            frequencyChart.update();
+        }
     }
 
     onMount(async () => {
         if (!$user) return;
 
         try {
-            const [durationRes, muscleRes] = await Promise.all([
+            const [durationRes, muscleRes, freqRes] = await Promise.all([
                 fetchGet(`/api/stats/weekly-duration/${$user.id}?range=${timeRange}`),
-                fetchGet(`/api/stats/muscle-distribution/${$user.id}?range=${timeRange}`)
+                fetchGet(`/api/stats/muscle-distribution/${$user.id}?range=${timeRange}`),
+                fetchGet(`/api/stats/workout-frequency/${$user.id}?range=${timeRange}`)
             ]);
 
-            if (!durationRes.error && !muscleRes.error) {
+            if (!durationRes.error && !muscleRes.error && !freqRes.error) {
                 loading = false;
                 await tick();
                 renderBarChart(durationRes.data);
                 renderPieChart(muscleRes.data);
+                renderFrequencyChart(freqRes.data);
             } else {
                 toastr.error("Failed to load stats");
                 loading = false;
@@ -134,6 +144,36 @@
             }
         });
     }
+
+    function renderFrequencyChart(data) {
+        if (!frequencyChartCanvas) return;
+        const ctx = frequencyChartCanvas.getContext('2d');
+        frequencyChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.map(d => d.label),
+                datasets: [{
+                    label: 'Workouts',
+                    data: data.map(d => d.count),
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' },
+                    title: { display: true, text: 'Workout Frequency' }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                }
+            }
+        });
+    }
 </script>
 
 <main>
@@ -176,6 +216,9 @@
                 </div>
                 <div class="chart-wrapper">
                     <canvas bind:this={pieChartCanvas}></canvas>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas bind:this={frequencyChartCanvas}></canvas>
                 </div>
             </div>
         {/if}

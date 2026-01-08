@@ -40,6 +40,39 @@ router.get("/api/stats/weekly-duration/:userId", async (req, res) => {
   }
 });
 
+router.get("/api/stats/workout-frequency/:userId", async (req, res) => {
+  const { userId } = req.params;
+  const { range = "3m" } = req.query;
+
+  const buckets = generateTimeBuckets(range);
+  // Initialize count for each bucket
+  const stats = buckets.map(b => ({ ...b, count: 0 }));
+
+  const queryStartDate = stats[0].start.toISOString();
+
+  try {
+    const { data, error } = await supabase
+      .from("workouts")
+      .select("start_time")
+      .eq("user_id", userId)
+      .gte("start_time", queryStartDate);
+
+    if (error) throw error;
+
+    data.forEach(w => {
+        if (!w.start_time) return;
+        const wStart = new Date(w.start_time);
+        const bucket = stats.find(s => wStart >= s.start && wStart < s.end);
+        if (bucket) bucket.count++;
+    });
+
+    res.send({ data: stats });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ error: "Internal server error" });
+  }
+});
+
 router.get("/api/stats/muscle-distribution/:userId", async (req, res) => {
   const { userId } = req.params;
   const { range = "3m" } = req.query;
