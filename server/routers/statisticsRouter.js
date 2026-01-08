@@ -115,4 +115,65 @@ router.get("/api/stats/muscle-distribution/:userId", async (req, res) => {
   }
 });
 
+router.get("/api/stats/heatmap/:userId", async (req, res) => {
+  const { userId } = req.params;
+  
+  // Fetch last ~1 year of data
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - 370); 
+
+  try {
+    const { data, error } = await supabase
+      .from("workouts")
+      .select("start_time")
+      .eq("user_id", userId)
+      .gte("start_time", startDate.toISOString());
+
+    if (error) throw error;
+
+    const heatmap = {};
+    data.forEach(w => {
+        if (!w.start_time) return;
+        const date = w.start_time.split('T')[0];
+        heatmap[date] = (heatmap[date] || 0) + 1;
+    });
+
+    res.send({ data: heatmap });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ error: "Internal server error" });
+  }
+});
+
+router.get("/api/stats/weekday-frequency/:userId", async (req, res) => {
+  const { userId } = req.params;
+  const { range = "1m" } = req.query;
+  const startDate = getStartDateForRange(range);
+
+  try {
+    const { data, error } = await supabase
+      .from("workouts")
+      .select("start_time")
+      .eq("user_id", userId)
+      .gte("start_time", startDate.toISOString());
+
+    if (error) throw error;
+
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    const counts = new Array(7).fill(0);
+
+    data.forEach(w => {
+      if (!w.start_time) return;
+      const d = new Date(w.start_time);
+      const dayIndex = (d.getDay() + 6) % 7; // Shift so 0=Monday, 6=Sunday
+      counts[dayIndex]++;
+    });
+
+    res.send({ data: { labels: days, values: counts } });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ error: "Internal server error" });
+  }
+});
+
 export default router;
