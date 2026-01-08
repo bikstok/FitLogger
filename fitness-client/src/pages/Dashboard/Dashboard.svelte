@@ -10,20 +10,40 @@
     let barChart;
     let pieChart;
     let loading = $state(true);
+    let timeRange = $state("3m");
+
+    const rangeOptions = [
+        { value: "1w", label: "1W" },
+        { value: "1m", label: "1M" },
+        { value: "3m", label: "3M" },
+        { value: "6m", label: "6M" },
+        { value: "1y", label: "1Y" }
+    ];
+
+    async function loadDurationStats() {
+        if (!$user) return;
+        const res = await fetchGet(`/api/stats/weekly-duration/${$user.id}?range=${timeRange}`);
+        
+        if (!res.error && barChart) {
+            barChart.data.labels = res.data.map(d => d.label);
+            barChart.data.datasets[0].data = res.data.map(d => d.hours);
+            barChart.update();
+        }
+    }
 
     onMount(async () => {
         if (!$user) return;
 
         try {
-            const [weeklyRes, muscleRes] = await Promise.all([
-                fetchGet(`/api/stats/weekly-duration/${$user.id}`),
+            const [durationRes, muscleRes] = await Promise.all([
+                fetchGet(`/api/stats/weekly-duration/${$user.id}?range=${timeRange}`),
                 fetchGet(`/api/stats/muscle-distribution/${$user.id}`)
             ]);
 
-            if (!weeklyRes.error && !muscleRes.error) {
+            if (!durationRes.error && !muscleRes.error) {
                 loading = false;
                 await tick();
-                renderBarChart(weeklyRes.data);
+                renderBarChart(durationRes.data);
                 renderPieChart(muscleRes.data);
             } else {
                 toastr.error("Failed to load stats");
@@ -61,7 +81,7 @@
                     },
                     title: {
                         display: true,
-                        text: 'Weekly Workout Duration (Last 12 Weeks)'
+                        text: 'Workout Duration'
                     }
                 },
                 scales: {
@@ -131,6 +151,19 @@
         {:else}
             <div class="charts-grid">
                 <div class="chart-wrapper">
+                    <div class="chart-header">
+                        <div class="range-controls">
+                            {#each rangeOptions as option}
+                                <button 
+                                    class="range-btn" 
+                                    class:active={timeRange === option.value}
+                                    onclick={() => { timeRange = option.value; loadDurationStats(); }}
+                                >
+                                    {option.label}
+                                </button>
+                            {/each}
+                        </div>
+                    </div>
                     <canvas bind:this={barChartCanvas}></canvas>
                 </div>
                 <div class="chart-wrapper">
@@ -150,5 +183,39 @@
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         gap: 2rem;
     }
-    .chart-wrapper { position: relative; height: 400px; width: 100%; }
+    .chart-wrapper { position: relative; height: 400px; width: 100%; display: flex; flex-direction: column; }
+
+    .chart-header {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 10px;
+        z-index: 10;
+    }
+
+    .range-controls {
+        display: flex;
+        background: #f3f4f6;
+        padding: 4px;
+        border-radius: 8px;
+        gap: 2px;
+    }
+
+    .range-btn {
+        background: none;
+        border: none;
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #6b7280;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .range-btn:hover { color: #374151; }
+    .range-btn.active { background: white; color: #4f46e5; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+    
+    :global(body.dark-mode) .range-controls { background: #374151; }
+    :global(body.dark-mode) .range-btn { color: #9ca3af; }
+    :global(body.dark-mode) .range-btn.active { background: #4b5563; color: #fff; }
 </style>
