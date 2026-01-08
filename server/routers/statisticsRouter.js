@@ -1,6 +1,6 @@
 import { Router } from "express";
 import supabase from "../util/supabaseUtil.js";
-import { getWeekNumber } from "../util/workoutUtils.js";
+import { getStartDateForRange, generateTimeBuckets } from "../util/dateUtils.js";
 
 const router = Router();
 
@@ -8,49 +8,7 @@ router.get("/api/stats/weekly-duration/:userId", async (req, res) => {
   const { userId } = req.params;
   const { range = "3m" } = req.query;
 
-  const now = new Date();
-  const stats = [];
-
-  // Generate Buckets based on range
-  if (range === "1w") {
-    // Daily buckets for last 7 days
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      d.setHours(0, 0, 0, 0);
-      const end = new Date(d);
-      end.setDate(end.getDate() + 1);
-      stats.push({ start: d, end, label: d.toLocaleDateString('en-US', { weekday: 'short' }), hours: 0 });
-    }
-  } else if (range === "1y") {
-    // Monthly buckets for last 12 months
-    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    for (let i = 11; i >= 0; i--) {
-      const start = new Date(currentMonthStart);
-      start.setMonth(start.getMonth() - i);
-      const end = new Date(start);
-      end.setMonth(end.getMonth() + 1);
-      stats.push({ start, end, label: start.toLocaleDateString('en-US', { month: 'short' }), hours: 0 });
-    }
-  } else {
-    // Weekly buckets (1m, 3m, 6m)
-    let weeksCount = 12; // Default 3m
-    if (range === "1m") weeksCount = 5;
-    if (range === "6m") weeksCount = 26;
-
-    const currentMonday = new Date(now);
-    const day = currentMonday.getDay() || 7;
-    currentMonday.setDate(currentMonday.getDate() - (day - 1));
-    currentMonday.setHours(0, 0, 0, 0);
-
-    for (let i = weeksCount - 1; i >= 0; i--) {
-      const start = new Date(currentMonday);
-      start.setDate(start.getDate() - (i * 7));
-      const end = new Date(start);
-      end.setDate(end.getDate() + 7);
-      stats.push({ start, end, label: `Week ${getWeekNumber(start)}`, hours: 0 });
-    }
-  }
+  const stats = generateTimeBuckets(range);
 
   const queryStartDate = stats[0].start.toISOString();
 
@@ -84,6 +42,8 @@ router.get("/api/stats/weekly-duration/:userId", async (req, res) => {
 
 router.get("/api/stats/muscle-distribution/:userId", async (req, res) => {
   const { userId } = req.params;
+  const { range = "3m" } = req.query;
+  const startDate = getStartDateForRange(range);
 
   try {
     // Join workout_exercises with exercises and filter by user via workouts
@@ -94,10 +54,12 @@ router.get("/api/stats/muscle-distribution/:userId", async (req, res) => {
           primary_muscle_group
         ),
         workouts!inner (
-          user_id
+          user_id,
+          start_time
         )
       `)
-      .eq("workouts.user_id", userId);
+      .eq("workouts.user_id", userId)
+      .gte("workouts.start_time", startDate.toISOString());
 
     if (error) throw error;
 

@@ -20,14 +20,22 @@
         { value: "1y", label: "1Y" }
     ];
 
-    async function loadDurationStats() {
+    async function updateStats() {
         if (!$user) return;
-        const res = await fetchGet(`/api/stats/weekly-duration/${$user.id}?range=${timeRange}`);
+        const [durationRes, muscleRes] = await Promise.all([
+            fetchGet(`/api/stats/weekly-duration/${$user.id}?range=${timeRange}`),
+            fetchGet(`/api/stats/muscle-distribution/${$user.id}?range=${timeRange}`)
+        ]);
         
-        if (!res.error && barChart) {
-            barChart.data.labels = res.data.map(d => d.label);
-            barChart.data.datasets[0].data = res.data.map(d => d.hours);
+        if (!durationRes.error && barChart) {
+            barChart.data.labels = durationRes.data.map(d => d.label);
+            barChart.data.datasets[0].data = durationRes.data.map(d => d.hours);
             barChart.update();
+        }
+        if (!muscleRes.error && pieChart) {
+            pieChart.data.labels = muscleRes.data.labels;
+            pieChart.data.datasets[0].data = muscleRes.data.values;
+            pieChart.update();
         }
     }
 
@@ -37,7 +45,7 @@
         try {
             const [durationRes, muscleRes] = await Promise.all([
                 fetchGet(`/api/stats/weekly-duration/${$user.id}?range=${timeRange}`),
-                fetchGet(`/api/stats/muscle-distribution/${$user.id}`)
+                fetchGet(`/api/stats/muscle-distribution/${$user.id}?range=${timeRange}`)
             ]);
 
             if (!durationRes.error && !muscleRes.error) {
@@ -157,7 +165,7 @@
                                 <button 
                                     class="range-btn" 
                                     class:active={timeRange === option.value}
-                                    onclick={() => { timeRange = option.value; loadDurationStats(); }}
+                                    onclick={() => { timeRange = option.value; updateStats(); }}
                                 >
                                     {option.label}
                                 </button>
