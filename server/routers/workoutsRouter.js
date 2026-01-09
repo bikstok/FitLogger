@@ -145,4 +145,25 @@ router.delete("/api/workouts/:id", async (req, res) => {
   }
 });
 
+router.delete("/api/workouts/all/:userId", async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const { error } = await supabase
+      .from("workouts")
+      .delete()
+      .eq("user_id", userId);
+
+    if (error) {
+      console.error(error);
+      return res.status(500).send({ error: "Could not delete all workouts" });
+    }
+
+    res.status(200).send({ message: "All workouts deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: "Internal server error" });
+  }
+});
+
 export default router;
