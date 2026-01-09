@@ -176,4 +176,43 @@ router.get("/api/stats/weekday-frequency/:userId", async (req, res) => {
   }
 });
 
+router.get("/api/stats/exercise-progression/:userId/:exerciseId", async (req, res) => {
+  const { userId, exerciseId } = req.params;
+  const { range = "3m" } = req.query;
+  const startDate = getStartDateForRange(range);
+
+  try {
+    const { data, error } = await supabase
+      .from("workout_exercises")
+      .select(`
+        sets (weight_kg),
+        workouts!inner (
+          start_time,
+          user_id
+        )
+      `)
+      .eq("exercise_id", exerciseId)
+      .eq("workouts.user_id", userId)
+      .gte("workouts.start_time", startDate.toISOString());
+
+    if (error) throw error;
+
+    const progression = data
+      .map((item) => {
+        const maxWeight = item.sets.reduce((max, set) => Math.max(max, set.weight_kg || 0), 0);
+        return { date: item.workouts.start_time, weight: maxWeight };
+      })
+      .filter((p) => p.weight > 0)
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    res.send({ data: { 
+      labels: progression.map(p => new Date(p.date).toLocaleDateString()), 
+      values: progression.map(p => p.weight) 
+    }});
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ error: "Internal server error" });
+  }
+});
+
 export default router;

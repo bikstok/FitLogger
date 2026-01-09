@@ -1,11 +1,29 @@
 <script>
+	import { tick } from 'svelte';
 	import { fetchGet } from '../../util/fetchUtil.js';
+	import { user } from '../../lib/stores/authStore.js';
+	import Chart from 'chart.js/auto';
+	import toastr from 'toastr';
+
 	let exercises = $state([]);
 	let error = $state(null);
 	let loading = $state(true);
 	let searchQuery = $state("");
 	let selectedMuscleGroup = $state("");
 	let selectedEquipment = $state("");
+	
+	let selectedExercise = $state(null);
+	let chartCanvas;
+	let chartInstance;
+	let timeRange = $state("3m");
+
+	const rangeOptions = [
+		{ value: "1w", label: "1W" },
+		{ value: "1m", label: "1M" },
+		{ value: "3m", label: "3M" },
+		{ value: "6m", label: "6M" },
+		{ value: "1y", label: "1Y" }
+	];
 
 	$effect(() => {
 		async function fetchExercises() {
@@ -44,6 +62,64 @@
 			return matchesSearch && matchesGroup && matchesEquipment;
 		})
 	);
+
+	async function openExerciseStats(exercise) {
+		if (!$user) {
+			toastr.info("Please login to view your progress");
+			return;
+		}
+		selectedExercise = exercise;
+		timeRange = "3m";
+		await tick();
+		loadChartData(exercise.id);
+	}
+
+	function closeStats() {
+		selectedExercise = null;
+		if (chartInstance) chartInstance.destroy();
+	}
+
+	async function loadChartData(exerciseId) {
+		try {
+			const res = await fetchGet(`/api/stats/exercise-progression/${$user.id}/${exerciseId}?range=${timeRange}`);
+			if (res.error) throw new Error(res.error);
+			renderChart(res.data);
+		} catch (e) {
+			toastr.error("Failed to load progression data");
+		}
+	}
+
+	function renderChart(data) {
+		if (!chartCanvas) return;
+		if (chartInstance) chartInstance.destroy();
+
+		const rangeLabel = rangeOptions.find(r => r.value === timeRange)?.label || '3M';
+
+		const ctx = chartCanvas.getContext('2d');
+		chartInstance = new Chart(ctx, {
+			type: 'line',
+			data: {
+				labels: data.labels,
+				datasets: [{
+					label: 'Max Weight (kg)',
+					data: data.values,
+					borderColor: '#4f46e5',
+					backgroundColor: 'rgba(79, 70, 229, 0.1)',
+					tension: 0.3,
+					fill: true
+				}]
+			},
+			options: {
+				responsive: true,
+				plugins: {
+					title: { display: true, text: `Max Weight Progression (${rangeLabel})` }
+				},
+				scales: {
+					y: { beginAtZero: true, title: { display: true, text: 'Weight (kg)' } }
+				}
+			}
+		});
+	}
 </script>
 
 <div class="page">
@@ -78,7 +154,9 @@
 	{:else}
 		<div class="grid">
 			{#each filteredExercises as exercise (exercise.id)}
-				<div class="card">
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
+				<div class="card" onclick={() => openExerciseStats(exercise)}>
 					{#if exercise.image_url}
 						<video controls muted loop autoplay playsinline>
 							<source src={`/exercise_videos/${exercise.image_url}`} type="video/mp4" />
@@ -97,6 +175,31 @@
 					</div>
 				</div>
 			{/each}
+		</div>
+	{/if}
+
+	{#if selectedExercise}
+		<!-- svelte-ignore a11y_click_events_have_key_events -->
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div class="modal-backdrop" onclick={closeStats}>
+			<div class="modal-content" onclick={(e) => e.stopPropagation()}>
+				<button class="close-btn" onclick={closeStats}>&times;</button>
+				<h2>{selectedExercise.name} Progress</h2>
+				<div class="range-controls">
+					{#each rangeOptions as option}
+						<button 
+							class="range-btn" 
+							class:active={timeRange === option.value}
+							onclick={() => { timeRange = option.value; loadChartData(selectedExercise.id); }}
+						>
+							{option.label}
+						</button>
+					{/each}
+				</div>
+				<div class="chart-container">
+					<canvas bind:this={chartCanvas}></canvas>
+				</div>
+			</div>
 		</div>
 	{/if}
 </div>
@@ -142,6 +245,7 @@
 		box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 		transition: transform 0.2s;
 		background: white;
+		cursor: pointer;
 	}
 
 	.card:hover {
@@ -187,4 +291,46 @@
 		text-align: center;
 		color: #666;
 	}
+
+	/* Modal Styles */
+	.modal-backdrop {
+		position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+		background: rgba(0, 0, 0, 0.5);
+		display: flex; justify-content: center; align-items: center;
+		z-index: 1000; padding: 1rem;
+	}
+
+	.modal-content {
+		background: white; border-radius: 12px;
+		width: 100%; max-width: 700px;
+		padding: 1.5rem; position: relative;
+		box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+	}
+
+	.close-btn {
+		position: absolute; top: 1rem; right: 1rem;
+		background: none; border: none;
+		font-size: 1.5rem; cursor: pointer; color: #666;
+	}
+
+	.chart-container { position: relative; height: 350px; width: 100%; margin-top: 1rem; }
+	
+	:global(body.dark-mode) .modal-content { background-color: #1f2937; color: white; }
+
+	.range-controls {
+		display: flex;
+		justify-content: center;
+		gap: 0.5rem;
+		margin-bottom: 1rem;
+	}
+
+	.range-btn {
+		background: #f3f4f6; border: none; padding: 0.4rem 0.8rem;
+		border-radius: 6px; font-size: 0.9rem; cursor: pointer;
+		color: #666; transition: all 0.2s;
+	}
+	.range-btn:hover { background: #e5e7eb; }
+	.range-btn.active { background: #4f46e5; color: white; }
+	:global(body.dark-mode) .range-btn { background: #374151; color: #9ca3af; }
+	:global(body.dark-mode) .range-btn.active { background: #6366f1; color: white; }
 </style>
