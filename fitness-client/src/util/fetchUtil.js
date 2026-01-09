@@ -41,3 +41,17 @@ export async function fetchDelete(endpoint) {
         return { error: "Network error" };
     }
 }
+
+export async function fetchPostFormData(endpoint, formData) {
+    try {
+        const response = await fetch(BASE_URL + endpoint, {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+        });
+        return await response.json();
+    } catch (error) {
+        console.error("Fetch POST FormData error:", error);
+        return { error: "Network error" };
+    }
+}

@@ -2,7 +2,10 @@ import { Router } from "express";
 import supabase from "../util/supabaseUtil.js";
 import { calculateDuration, calculateTotalVolume } from "../util/workoutUtils.js";
 import { emitWorkoutCreated } from "../util/socketUtil.js";
+import multer from "multer";
+import { importWorkoutsFromCsv } from "../util/importUtil.js";
 
+const upload = multer({ storage: multer.memoryStorage() });
 const router = Router();
 
 router.post("/api/workouts", async (req, res) => {
@@ -163,6 +166,22 @@ router.delete("/api/workouts/all/:userId", async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).send({ error: "Internal server error" });
+  }
+});
+
+router.post("/api/workouts/import", upload.single('file'), async (req, res) => {
+  const userId = req.body.user_id;
+  
+  if (!userId || !req.file) {
+    return res.status(400).send({ error: "Missing file or user_id" });
+  }
+
+  try {
+    const successCount = await importWorkoutsFromCsv(userId, req.file.buffer);
+    res.send({ message: `Imported ${successCount} workouts successfully` });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ error: "Import failed" });
   }
 });
 
