@@ -2,33 +2,33 @@ import supabase from "./supabaseUtil.js";
 import csv from "csv-parser";
 import { Readable } from "stream";
 
-function parseHevyDate(dateStr) {
-  if (!dateStr) return null;
+function parseHevyDate(dateString) {
+  if (!dateString) return null;
   const monthMap = { 'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12' };
   try {
-    const cleanStr = dateStr.replace(/,/g, ''); 
-    const parts = cleanStr.split(' ');
-    if (parts.length < 4) return null;
-    const day = parts[0].padStart(2, '0');
-    const month = monthMap[parts[1]];
-    const year = parts[2];
-    const time = parts[3];
+    const cleanedString = dateString.replace(/,/g, ''); 
+    const dateParts = cleanedString.split(' ');
+    if (dateParts.length < 4) return null;
+    const day = dateParts[0].padStart(2, '0');
+    const month = monthMap[dateParts[1]];
+    const year = dateParts[2];
+    const time = dateParts[3];
     if (!month) return null;
     return `${year}-${month}-${day} ${time}:00`;
-  } catch (e) { return null; }
+  } catch (error) { return null; }
 }
 
 export async function importWorkoutsFromCsv(userId, fileBuffer) {
   // 1. Build Dynamic Exercise Map (Name -> ID) from DB
-  const { data: exercises, error: exError } = await supabase
+  const { data: exercises, error: fetchExercisesError } = await supabase
     .from("exercises")
     .select("id, name");
   
-  if (exError) throw exError;
+  if (fetchExercisesError) throw fetchExercisesError;
   
   const exerciseMap = {};
-  exercises.forEach(e => {
-      exerciseMap[e.name] = e.id;
+  exercises.forEach(exercise => {
+      exerciseMap[exercise.name] = exercise.id;
   });
 
   // 2. Parse CSV
@@ -89,25 +89,25 @@ export async function importWorkoutsFromCsv(userId, fileBuffer) {
   });
 
   // 3. Insert Data
-  const workoutsPayload = Array.from(workoutsMap.values()).map(w => ({
-      ...w,
-      exercises: Array.from(w.exercisesMap.values())
+  const workoutsPayload = Array.from(workoutsMap.values()).map(workout => ({
+      ...workout,
+      exercises: Array.from(workout.exercisesMap.values())
   }));
 
   let successCount = 0;
 
-  for (const wData of workoutsPayload) {
-      const { data: workout, error: wError } = await supabase
+  for (const workoutPayload of workoutsPayload) {
+      const { data: createdWorkout, error: workoutInsertError } = await supabase
           .from("workouts")
-          .insert([{ user_id: userId, title: wData.title, start_time: wData.start_time, end_time: wData.end_time, description: wData.description }])
+          .insert([{ user_id: userId, title: workoutPayload.title, start_time: workoutPayload.start_time, end_time: workoutPayload.end_time, description: workoutPayload.description }])
           .select().single();
       
-      if (wError) continue;
+      if (workoutInsertError) continue;
 
-      for (const exData of wData.exercises) {
-          const { data: we, error: weError } = await supabase.from("workout_exercises").insert([{ workout_id: workout.id, exercise_id: exData.exercise_id, notes: exData.notes }]).select().single();
-          if (weError) continue;
-          const setsPayload = exData.sets.map((s, i) => ({ workout_exercise_id: we.id, set_index: i, set_type: s.set_type, weight_kg: s.weight_kg, reps: s.reps }));
+      for (const exercisePayload of workoutPayload.exercises) {
+          const { data: createdWorkoutExercise, error: exerciseInsertError } = await supabase.from("workout_exercises").insert([{ workout_id: createdWorkout.id, exercise_id: exercisePayload.exercise_id, notes: exercisePayload.notes }]).select().single();
+          if (exerciseInsertError) continue;
+          const setsPayload = exercisePayload.sets.map((set, index) => ({ workout_exercise_id: createdWorkoutExercise.id, set_index: index, set_type: set.set_type, weight_kg: set.weight_kg, reps: set.reps }));
           await supabase.from("sets").insert(setsPayload);
       }
       successCount++;
