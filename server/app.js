@@ -11,9 +11,6 @@ import { emitUserDisconnected, emitUserCount } from "./util/socketUtil.js";
 const app = express();
 app.use(express.json());
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 const server = http.createServer(app);
 
 const sessionMiddleware = session({
@@ -101,14 +98,9 @@ app.use(statisticsRouter);
 import routinesRouter from "./routers/routinesRouter.js";
 app.use(routinesRouter);
 
-const clientDist = path.join(__dirname, 'public');
-if (fs.existsSync(clientDist)) {
-  app.use(express.static(clientDist));
-
 app.get("/{*splat}", (req, res) => {
   res.sendFile(path.join(clientDist, "index.html"));
 });
-}
 
 const PORT = Number(process.env.PORT) || 8080;
 
