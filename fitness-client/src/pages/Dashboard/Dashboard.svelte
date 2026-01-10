@@ -18,11 +18,11 @@
     let heatmapData = $state({});
 
     const rangeOptions = [
-        { value: "1w", label: "1W" },
-        { value: "1m", label: "1M" },
-        { value: "3m", label: "3M" },
-        { value: "6m", label: "6M" },
-        { value: "1y", label: "1Y" }
+        { value: "1week", label: "1W" },
+        { value: "1month", label: "1M" },
+        { value: "3month", label: "3M" },
+        { value: "6month", label: "6M" },
+        { value: "1year", label: "1Y" }
     ];
 
     async function updateStats() {
@@ -247,8 +247,7 @@
 			<a href="/login">Go to Login</a>
 		</p>
 	{:else}
-		<h1>Logged in successfully</h1>
-		<p>Your user id: <strong>{$user.id}</strong></p>
+	
 	{/if}
 </main>
 
