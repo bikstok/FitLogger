@@ -3,7 +3,6 @@ import supabase from "../util/supabaseUtil.js";
 
 const router = Router();
 
-// GET /api/routines/:userId
 router.get("/api/routines/:userId", async (req, res) => {
   const { userId } = req.params;
   try {
@@ -27,7 +26,6 @@ router.get("/api/routines/:userId", async (req, res) => {
   }
 });
 
-// GET /api/routines/detail/:id
 router.get("/api/routines/detail/:id", async (req, res) => {
   const { id } = req.params;
   try {
@@ -51,13 +49,12 @@ router.get("/api/routines/detail/:id", async (req, res) => {
   }
 });
 
-// POST /api/routines
 router.post("/api/routines", async (req, res) => {
   const {
     user_id,
     name,
     description,
-    exercises // Array of exercises with sets (template sets)
+    exercises 
   } = req.body;
 
   if (!user_id || !name) {

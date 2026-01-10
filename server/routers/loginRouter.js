@@ -2,7 +2,6 @@ import { Router } from "express";
 import { comparePasswords } from "../util/passwordHashUtil.js";
 import supabase from "../util/supabaseUtil.js";
 import { Resend } from "resend";
-import nodemailer from "nodemailer";
 import { emitUserLogin } from "../util/socketUtil.js";
 
 const resend = new Resend(process.env.RESEND_EMAIL_API_KEY);
@@ -43,7 +42,7 @@ router.post("/api/login", async (req, res) => {
         from: "FitLogger Team <no-reply@fitlogger.dk>",
         to: user.email,
         subject: "New Login Detected",
-        html: `<p>Hello ${user.user_name},</p>
+        html: `<p>Hello ${user.user_name}, if you did not just login to FitLogger then please change your password</p>
            <p>Login detected from IP: <strong>${ip}</strong></p>`,
       });
       console.log("Email sent:", result);
