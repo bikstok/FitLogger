@@ -8,6 +8,45 @@ import { importWorkoutsFromCsv } from "../util/importUtil.js";
 const upload = multer({ storage: multer.memoryStorage() });
 const router = Router();
 
+router.get("/api/workouts/:userId", async (req, res) => {
+  const { userId } = req.params;
+  const limit = parseInt(req.query.limit) || 10;
+  const offset = parseInt(req.query.offset) || 0;
+
+  try {
+    const { data, error } = await supabase
+      .from("workouts")
+      .select(`
+        *,
+        workout_exercises (
+          *,
+          sets (*),
+          exercises (*)
+        )
+      `)
+      .eq("user_id", userId)
+      .order("start_time", { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) {
+      console.error(error);
+      return res.status(500).send({ error: "Could not fetch workouts" });
+    }
+
+    const enrichedData = data.map((workout) => {
+      const duration = calculateDuration(workout.start_time, workout.end_time);
+      const total_volume = calculateTotalVolume(workout.workout_exercises);
+
+      return { ...workout, duration, total_volume };
+    });
+
+    res.status(200).send({ data: enrichedData });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: "Internal server error" });
+  }
+});
+
 router.post("/api/workouts", async (req, res) => {
   const {
     user_id, 
@@ -91,42 +130,19 @@ router.post("/api/workouts", async (req, res) => {
   }
 });
 
-router.get("/api/workouts/:userId", async (req, res) => {
-  const { userId } = req.params;
-  const limit = parseInt(req.query.limit) || 10;
-  const offset = parseInt(req.query.offset) || 0;
+router.post("/api/workouts/import", upload.single('file'), async (req, res) => {
+  const userId = req.body.user_id;
+  
+  if (!userId || !req.file) {
+    return res.status(400).send({ error: "Missing file or user_id" });
+  }
 
   try {
-    const { data, error } = await supabase
-      .from("workouts")
-      .select(`
-        *,
-        workout_exercises (
-          *,
-          sets (*),
-          exercises (*)
-        )
-      `)
-      .eq("user_id", userId)
-      .order("start_time", { ascending: false })
-      .range(offset, offset + limit - 1);
-
-    if (error) {
-      console.error(error);
-      return res.status(500).send({ error: "Could not fetch workouts" });
-    }
-
-    const enrichedData = data.map((workout) => {
-      const duration = calculateDuration(workout.start_time, workout.end_time);
-      const total_volume = calculateTotalVolume(workout.workout_exercises);
-
-      return { ...workout, duration, total_volume };
-    });
-
-    res.status(200).send({ data: enrichedData });
+    const successCount = await importWorkoutsFromCsv(userId, req.file.buffer);
+    res.send({ message: `Imported ${successCount} workouts successfully` });
   } catch (error) {
     console.error(error);
-    return res.status(500).send({ error: "Internal server error" });
+    res.status(500).send({ error: "Import failed" });
   }
 });
 
@@ -166,22 +182,6 @@ router.delete("/api/workouts/all/:userId", async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).send({ error: "Internal server error" });
-  }
-});
-
-router.post("/api/workouts/import", upload.single('file'), async (req, res) => {
-  const userId = req.body.user_id;
-  
-  if (!userId || !req.file) {
-    return res.status(400).send({ error: "Missing file or user_id" });
-  }
-
-  try {
-    const successCount = await importWorkoutsFromCsv(userId, req.file.buffer);
-    res.send({ message: `Imported ${successCount} workouts successfully` });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send({ error: "Import failed" });
   }
 });
 

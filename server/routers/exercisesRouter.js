@@ -3,6 +3,22 @@ import supabase from "../util/supabaseUtil.js";
 
 const router = Router();
 
+router.get("/api/exercises", async (req, res) => {
+  try {
+    const { data, error } = await supabase.from("exercises").select("*");
+
+    if (error) {
+      console.error(error);
+      return res.status(500).send({ error: "Could not fetch exercises" });
+    }
+
+    res.status(200).send({ data: data });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: "Internal server error" });
+  }
+});
+
 router.post("/api/exercises", async (req, res) => {
   const {
     name,
@@ -38,22 +54,6 @@ router.post("/api/exercises", async (req, res) => {
     }
 
     res.status(201).send({ data: data });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).send({ error: "Internal server error" });
-  }
-});
-
-router.get("/api/exercises", async (req, res) => {
-  try {
-    const { data, error } = await supabase.from("exercises").select("*");
-
-    if (error) {
-      console.error(error);
-      return res.status(500).send({ error: "Could not fetch exercises" });
-    }
-
-    res.status(200).send({ data: data });
   } catch (error) {
     console.error(error);
     return res.status(500).send({ error: "Internal server error" });
