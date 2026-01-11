@@ -24,7 +24,7 @@
 
 	function addExercise() {
 		if (!selectedExerciseId) return;
-		const exercise = availableExercises.find(e => e.id == selectedExerciseId);
+		const exercise = availableExercises.find(ex => ex.id == selectedExerciseId);
 		if (exercise) {
 			selectedExercises = [...selectedExercises, {
 				exercise_id: exercise.id,
@@ -37,27 +37,27 @@
 
 	function addSet(exerciseIndex) {
 		const exercises = [...selectedExercises];
-		const ex = exercises[exerciseIndex];
-		const lastSet = ex.sets[ex.sets.length - 1];
+		const targetExercise = exercises[exerciseIndex];
+		const lastSet = targetExercise.sets[targetExercise.sets.length - 1];
 		const newSet = lastSet ? { ...lastSet } : { weight_kg: 0, reps: 0 };
 		
-		ex.sets.push(newSet);
+		targetExercise.sets.push(newSet);
 		selectedExercises = exercises;
 	}
 
 	function removeSet(exerciseIndex, setIndex) {
 		const exercises = [...selectedExercises];
-		exercises[exerciseIndex].sets = exercises[exerciseIndex].sets.filter((_, i) => i !== setIndex);
+		exercises[exerciseIndex].sets = exercises[exerciseIndex].sets.filter((_, index) => index !== setIndex);
 		selectedExercises = exercises;
 	}
 
 	function removeExercise(index) {
-		selectedExercises = selectedExercises.filter((_, i) => i !== index);
+		selectedExercises = selectedExercises.filter((_, currentIndex) => currentIndex !== index);
 	}
 
-	function updateSet(exIndex, setIndex, field, value) {
+	function updateSet(exerciseIndex, setIndex, field, value) {
 		const exercises = [...selectedExercises];
-		exercises[exIndex].sets[setIndex][field] = Number(value);
+		exercises[exerciseIndex].sets[setIndex][field] = Number(value);
 		selectedExercises = exercises;
 	}
 
@@ -120,11 +120,11 @@
 	</div>
 
 	<div class="exercises-list">
-		{#each selectedExercises as ex, i}
+		{#each selectedExercises as exercise, exerciseIndex}
 			<div class="exercise-card">
 				<div class="card-header">
-					<h3>{ex.name}</h3>
-					<button class="btn-icon" onclick={() => removeExercise(i)}>&times;</button>
+					<h3>{exercise.name}</h3>
+					<button class="btn-icon" onclick={() => removeExercise(exerciseIndex)}>&times;</button>
 				</div>
 				
 				<div class="sets-header">
@@ -134,16 +134,16 @@
 					<span></span>
 				</div>
 				
-				{#each ex.sets as set, j}
+				{#each exercise.sets as set, setIndex}
 					<div class="set-row">
-						<span class="set-num">{j + 1}</span>
-						<input type="number" value={set.weight_kg} oninput={(e) => updateSet(i, j, 'weight_kg', e.target.value)} />
-						<input type="number" value={set.reps} oninput={(e) => updateSet(i, j, 'reps', e.target.value)} />
-						<button class="btn-icon remove-set" onclick={() => removeSet(i, j)}>&times;</button>
+						<span class="set-num">{setIndex + 1}</span>
+						<input type="number" value={set.weight_kg} oninput={(e) => updateSet(exerciseIndex, setIndex, 'weight_kg', e.target.value)} />
+						<input type="number" value={set.reps} oninput={(e) => updateSet(exerciseIndex, setIndex, 'reps', e.target.value)} />
+						<button class="btn-icon remove-set" onclick={() => removeSet(exerciseIndex, setIndex)}>&times;</button>
 					</div>
 				{/each}
 				
-				<button class="btn-secondary" onclick={() => addSet(i)}>+ Add Set</button>
+				<button class="btn-secondary" onclick={() => addSet(exerciseIndex)}>+ Add Set</button>
 			</div>
 		{/each}
 	</div>

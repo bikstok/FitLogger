@@ -35,8 +35,8 @@
         ]);
         
         if (!durationRes.error && barChart) {
-            barChart.data.labels = durationRes.data.map(d => d.label);
-            barChart.data.datasets[0].data = durationRes.data.map(d => d.hours);
+            barChart.data.labels = durationRes.data.map(stat => stat.label);
+            barChart.data.datasets[0].data = durationRes.data.map(stat => stat.hours);
             barChart.update();
         }
         if (!muscleRes.error && pieChart) {
@@ -45,8 +45,8 @@
             pieChart.update();
         }
         if (!freqRes.error && frequencyChart) {
-            frequencyChart.data.labels = freqRes.data.map(d => d.label);
-            frequencyChart.data.datasets[0].data = freqRes.data.map(d => d.count);
+            frequencyChart.data.labels = freqRes.data.map(stat => stat.label);
+            frequencyChart.data.datasets[0].data = freqRes.data.map(stat => stat.count);
             frequencyChart.update();
         }
         if (!weekdayRes.error && weekdayChart) {
@@ -93,10 +93,10 @@
         barChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: data.map(d => d.label),
+                labels: data.map(stat => stat.label),
                 datasets: [{
                     label: 'Hours Worked Out',
-                    data: data.map(d => d.hours),
+                    data: data.map(stat => stat.hours),
                     backgroundColor: '#4f46e5',
                     borderRadius: 4,
                     hoverBackgroundColor: '#4338ca'
@@ -163,10 +163,10 @@
         frequencyChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: data.map(d => d.label),
+                labels: data.map(stat => stat.label),
                 datasets: [{
                     label: 'Workouts',
-                    data: data.map(d => d.count),
+                    data: data.map(stat => stat.count),
                     borderColor: '#10b981',
                     backgroundColor: 'rgba(16, 185, 129, 0.1)',
                     tension: 0.3,
@@ -227,12 +227,12 @@
             startDate.setDate(startDate.getDate() - 1);
         }
 
-        const d = new Date(startDate);
-        while (d <= today) {
-            const dateStr = d.toISOString().split('T')[0];
+        const currentDate = new Date(startDate);
+        while (currentDate <= today) {
+            const dateStr = currentDate.toISOString().split('T')[0];
             const count = heatmapData[dateStr] || 0;
             data.push({ dateStr, count });
-            d.setDate(d.getDate() + 1);
+            currentDate.setDate(currentDate.getDate() + 1);
         }
         return data;
     }

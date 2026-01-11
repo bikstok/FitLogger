@@ -42,16 +42,16 @@
 				const result = await fetchGet(`/api/routines/detail/${routineId}`);
 				
 				if (!result.error && result.data) {
-					const r = result.data;
-					title = r.name; // Pre-fill title with routine name
+					const routineData = result.data;
+					title = routineData.name; // Pre-fill title with routine name
 					
 					// Map routine exercises to workout exercises format
-					selectedExercises = r.routine_exercises.map(re => ({
-						exercise_id: re.exercise_id,
-						name: re.exercises.name,
-						sets: re.routine_sets.map(rs => ({
-							weight_kg: rs.target_weight_kg,
-							reps: rs.target_reps,
+					selectedExercises = routineData.routine_exercises.map(routineExercise => ({
+						exercise_id: routineExercise.exercise_id,
+						name: routineExercise.exercises.name,
+						sets: routineExercise.routine_sets.map(routineSet => ({
+							weight_kg: routineSet.target_weight_kg,
+							reps: routineSet.target_reps,
 							completed: false
 						}))
 					}));
@@ -64,7 +64,7 @@
 
 	function addExercise() {
 		if (!selectedExerciseId) return;
-		const exercise = availableExercises.find(e => e.id == selectedExerciseId);
+		const exercise = availableExercises.find(ex => ex.id == selectedExerciseId);
 		if (exercise) {
 			selectedExercises = [...selectedExercises, {
 				exercise_id: exercise.id,
@@ -77,34 +77,34 @@
 
 	function addSet(exerciseIndex) {
 		const exercises = [...selectedExercises];
-		const ex = exercises[exerciseIndex];
+		const targetExercise = exercises[exerciseIndex];
 		// Copy previous set values for convenience
-		const lastSet = ex.sets[ex.sets.length - 1];
+		const lastSet = targetExercise.sets[targetExercise.sets.length - 1];
 		const newSet = lastSet ? { ...lastSet, completed: false } : { weight_kg: 0, reps: 0, completed: false };
 		
-		ex.sets.push(newSet);
+		targetExercise.sets.push(newSet);
 		selectedExercises = exercises;
 	}
 
 	function removeSet(exerciseIndex, setIndex) {
 		const exercises = [...selectedExercises];
-		exercises[exerciseIndex].sets = exercises[exerciseIndex].sets.filter((_, i) => i !== setIndex);
+		exercises[exerciseIndex].sets = exercises[exerciseIndex].sets.filter((_, index) => index !== setIndex);
 		selectedExercises = exercises;
 	}
 
 	function removeExercise(index) {
-		selectedExercises = selectedExercises.filter((_, i) => i !== index);
+		selectedExercises = selectedExercises.filter((_, currentIndex) => currentIndex !== index);
 	}
 
-	function updateSet(exIndex, setIndex, field, value) {
+	function updateSet(exerciseIndex, setIndex, field, value) {
 		const exercises = [...selectedExercises];
-		exercises[exIndex].sets[setIndex][field] = Number(value);
+		exercises[exerciseIndex].sets[setIndex][field] = Number(value);
 		selectedExercises = exercises;
 	}
 
-	function toggleSetTimer(exIndex, setIndex, checked) {
+	function toggleSetTimer(exerciseIndex, setIndex, checked) {
 		const exercises = [...selectedExercises];
-		exercises[exIndex].sets[setIndex].completed = checked;
+		exercises[exerciseIndex].sets[setIndex].completed = checked;
 		selectedExercises = exercises;
 
 		if (checked) timer.start();
@@ -170,19 +170,19 @@
 	<div class="add-exercise-bar">
 		<select bind:value={selectedExerciseId}>
 			<option value="">Select Exercise...</option>
-			{#each availableExercises as ex}
-				<option value={ex.id}>{ex.name}</option>
+			{#each availableExercises as exercise}
+				<option value={exercise.id}>{exercise.name}</option>
 			{/each}
 		</select>
 		<button class="btn-primary" onclick={addExercise} disabled={!selectedExerciseId}>Add Exercise</button>
 	</div>
 
 	<div class="exercises-list">
-		{#each selectedExercises as ex, i}
+		{#each selectedExercises as exercise, exerciseIndex}
 			<div class="exercise-card">
 				<div class="card-header">
-					<h3>{ex.name}</h3>
-					<button class="btn-icon" onclick={() => removeExercise(i)}>&times;</button>
+					<h3>{exercise.name}</h3>
+					<button class="btn-icon" onclick={() => removeExercise(exerciseIndex)}>&times;</button>
 				</div>
 				
 				<div class="sets-header">
@@ -193,17 +193,17 @@
 					<span></span>
 				</div>
 				
-				{#each ex.sets as set, j}
+				{#each exercise.sets as set, setIndex}
 					<div class="set-row">
-						<input type="checkbox" checked={set.completed} onchange={(e) => toggleSetTimer(i, j, e.target.checked)} />
-						<span class="set-num">{j + 1}</span>
-						<input type="number" value={set.weight_kg} oninput={(e) => updateSet(i, j, 'weight_kg', e.target.value)} />
-						<input type="number" value={set.reps} oninput={(e) => updateSet(i, j, 'reps', e.target.value)} />
-						<button class="btn-icon remove-set" onclick={() => removeSet(i, j)}>&times;</button>
+						<input type="checkbox" checked={set.completed} onchange={(e) => toggleSetTimer(exerciseIndex, setIndex, e.target.checked)} />
+						<span class="set-num">{setIndex + 1}</span>
+						<input type="number" value={set.weight_kg} oninput={(e) => updateSet(exerciseIndex, setIndex, 'weight_kg', e.target.value)} />
+						<input type="number" value={set.reps} oninput={(e) => updateSet(exerciseIndex, setIndex, 'reps', e.target.value)} />
+						<button class="btn-icon remove-set" onclick={() => removeSet(exerciseIndex, setIndex)}>&times;</button>
 					</div>
 				{/each}
 				
-				<button class="btn-secondary" onclick={() => addSet(i)}>+ Add Set</button>
+				<button class="btn-secondary" onclick={() => addSet(exerciseIndex)}>+ Add Set</button>
 			</div>
 		{/each}
 	</div>
