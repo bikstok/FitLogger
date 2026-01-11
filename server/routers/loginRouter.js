@@ -2,7 +2,6 @@ import { Router } from "express";
 import { comparePasswords } from "../util/passwordHashUtil.js";
 import supabase from "../util/supabaseUtil.js";
 import { Resend } from "resend";
-import { emitUserLogin } from "../util/socketUtil.js";
 
 const resend = new Resend(process.env.RESEND_EMAIL_API_KEY);
 
@@ -49,8 +48,6 @@ router.post("/api/login", async (req, res) => {
     } catch (err) {
       console.error("Failed to send login notification email:", err);
     }
-
-    emitUserLogin(req.io, user.user_name);
 
     res.status(200).send({
       data: {

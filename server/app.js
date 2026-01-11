@@ -4,7 +4,7 @@ import path from "path";
 import http from "http";
 import session from "express-session";
 import { emitUserCount } from "./util/socketUtil.js";
-import {generalLimiter} from "./util/generalLimiterUtil.js";
+import generalLimiter from "./util/generalLimiterUtil.js";
 
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
 
