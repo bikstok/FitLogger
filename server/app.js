@@ -3,8 +3,7 @@ import express from "express";
 import path from "path";
 import http from "http";
 import session from "express-session";
-import supabase from "./util/supabaseUtil.js";
-import { emitUserDisconnected, emitUserCount } from "./util/socketUtil.js";
+import { emitUserCount } from "./util/socketUtil.js";
 import generalLimiter from "./util/generalLimiterUtil.js";
 
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
@@ -40,17 +39,8 @@ const io = new Server(server, {
 
 io.engine.use(sessionMiddleware);
 
-io.on("connection", async (socket) => {
-  const userId = socket.request.session?.userId;
-  if (userId) {
-    const { data } = await supabase.from("users").select("user_name").eq("id", userId).single();
-    if (data) socket.data.username = data.user_name;
-  }
-
+io.on("connection", (socket) => {
   socket.on("disconnect", () => {
-    if (socket.data.username) {
-      emitUserDisconnected(io, socket.data.username);
-    }
     emitUserCount(io, io.engine.clientsCount);
   });
 
