@@ -1,12 +1,12 @@
 import "dotenv/config";
 import express from "express";
 import path from "path";
-import fs from "fs";
-import { fileURLToPath } from "url";
 import http from "http";
 import session from "express-session";
 import supabase from "./util/supabaseUtil.js";
 import { emitUserDisconnected, emitUserCount } from "./util/socketUtil.js";
+
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
 
 const app = express();
 app.use(express.json());
@@ -29,7 +29,7 @@ const server = http.createServer(app);
 import { Server } from "socket.io";
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: FRONTEND_ORIGIN,
     methods: ["GET", "POST", "DELETE"],
     credentials: true,
   },
@@ -58,13 +58,13 @@ app.use((req, res, next) => {
   req.io = io;
   next();
 });
-  
+
 // CORS
 import cors from "cors";
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: FRONTEND_ORIGIN,
     credentials: true,
   })
 );
