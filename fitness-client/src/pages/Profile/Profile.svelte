@@ -54,16 +54,6 @@
     
     {#if $user}
         <div class="profile-card">
-            <div class="info-group">
-                <label for="username">Username</label>
-                <p id="username">{$user.username}</p>
-            </div>
-
-            <div class="info-group">
-                <label for="email">Email</label>
-                <p id="email">{$user.email}</p>
-            </div>
-
             <div class="import-section">
                 <h3>Import Workouts</h3>
                 <p>Upload a CSV file (Hevy/Strong format) to import your history.</p>
@@ -89,9 +79,7 @@
     .page { max-width: 600px; margin: 0 auto; padding: 2rem; }
     .profile-card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #eee; }
     
-    .info-group { margin-bottom: 1.5rem; }
-    .info-group label { display: block; font-size: 0.875rem; color: #6b7280; margin-bottom: 0.25rem; }
-    .info-group p { font-size: 1.125rem; color: #1f2937; font-weight: 500; margin: 0; }
+
     
     .import-section { margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #eee; }
     .import-section h3 { margin: 0 0 0.5rem 0; color: #333; }
