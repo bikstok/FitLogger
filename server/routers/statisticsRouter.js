@@ -1,9 +1,6 @@
 import { Router } from "express";
 import supabase from "../util/supabaseUtil.js";
-import {
-  getStartDateForRange,
-  generateTimeBuckets,
-} from "../util/dateUtils.js";
+import { getStartDateForRange, generateTimeBuckets} from "../util/dateUtils.js";
 import { requireAuthentication } from "../util/authUtil.js";
 
 const router = Router();

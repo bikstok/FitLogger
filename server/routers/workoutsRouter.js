@@ -1,9 +1,6 @@
 import { Router } from "express";
 import supabase from "../util/supabaseUtil.js";
-import {
-  calculateDuration,
-  calculateTotalVolume,
-} from "../util/workoutUtils.js";
+import { calculateDuration, calculateTotalVolume } from "../util/workoutUtils.js";
 import { emitWorkoutCreated } from "../util/socketUtil.js";
 import multer from "multer";
 import { importWorkoutsFromCsv } from "../util/importUtil.js";
