@@ -1,12 +1,12 @@
 <script>
   import { Link, navigate } from "svelte-routing";
-  import { user, clearUser } from '../stores/authStore.js';
-  import { theme } from '../stores/themeStore.js';
-  import { fetchPost } from '../../util/fetchUtil.js';
-  import toastr from 'toastr';
-  import fitnessLogo from '/fitness_favicon.png';
-  import darkModeIcon from '../../assets/dark_mode.png';
-  import lightModeIcon from '../../assets/light_mode.png';
+  import { user, clearUser } from "../stores/authStore.js";
+  import { theme } from "../stores/themeStore.js";
+  import { fetchPost } from "../../util/fetchUtil.js";
+  import toastr from "toastr";
+  import fitnessLogo from "/fitness_favicon.png";
+  import darkModeIcon from "../../assets/dark_mode.png";
+  import lightModeIcon from "../../assets/light_mode.png";
 
   export let activeUsers = 0;
 
@@ -28,7 +28,11 @@
 </script>
 
 <header>
-  <button class="theme-toggle" on:click={theme.toggle} title="Toggle Dark and Light Mode">
+  <button
+    class="theme-toggle"
+    on:click={theme.toggle}
+    title="Toggle Dark and Light Mode"
+  >
     {#if $theme}
       <img src={lightModeIcon} class="icon" alt="Light Mode Logo" />
     {:else}
@@ -36,7 +40,8 @@
     {/if}
   </button>
   <div class="active-users">
-    <span class="dot">●</span> {activeUsers} FitLogger Users Online
+    <span class="dot">●</span>
+    {activeUsers} FitLogger Users Online
   </div>
   <div class="nav-container">
     <div class="nav-left">
@@ -71,7 +76,7 @@
     left: 0;
     width: 100%;
     background-color: #ffffff;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     z-index: 1000;
   }
 
@@ -158,9 +163,15 @@
   }
 
   @keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+    100% {
+      opacity: 1;
+    }
   }
 
   /* Dark Mode Overrides for Header */

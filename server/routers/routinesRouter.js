@@ -9,14 +9,16 @@ router.get("/api/routines/:userId", requireAuthentication, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("routines")
-      .select(`
+      .select(
+        `
         *,
         routine_exercises (
           *,
           exercises (*),
           routine_sets (*)
         )
-      `)
+      `
+      )
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
@@ -27,40 +29,41 @@ router.get("/api/routines/:userId", requireAuthentication, async (req, res) => {
   }
 });
 
-router.get("/api/routines/detail/:id", requireAuthentication, async (req, res) => {
-  const { id } = req.params;
-  try {
-    const { data, error } = await supabase
-      .from("routines")
-      .select(`
+router.get(
+  "/api/routines/detail/:id",
+  requireAuthentication,
+  async (req, res) => {
+    const { id } = req.params;
+    try {
+      const { data, error } = await supabase
+        .from("routines")
+        .select(
+          `
         *,
         routine_exercises (
           *,
           exercises (*),
           routine_sets (*)
         )
-      `)
-      .eq("id", id)
-      .single();
+      `
+        )
+        .eq("id", id)
+        .single();
 
-    if (error) throw error;
-    res.send({ data });
-  } catch (error) {
-    res.status(500).send({ error: error.message });
+      if (error) throw error;
+      res.send({ data });
+    } catch (error) {
+      res.status(500).send({ error: error.message });
+    }
   }
-});
+);
 
 router.post("/api/routines", requireAuthentication, async (req, res) => {
-  const {
-    user_id,
-    name,
-    description,
-    exercises 
-  } = req.body;
+  const { user_id, name, description, exercises } = req.body;
 
   if (!user_id || !name) {
-    return res.status(400).send({ 
-      error: "Missing required fields: user_id, name" 
+    return res.status(400).send({
+      error: "Missing required fields: user_id, name",
     });
   }
 
@@ -68,11 +71,13 @@ router.post("/api/routines", requireAuthentication, async (req, res) => {
     // 1. Create Routine
     const { data: routine, error: routineError } = await supabase
       .from("routines")
-      .insert([{
-        user_id,
-        name,
-        description
-      }])
+      .insert([
+        {
+          user_id,
+          name,
+          description,
+        },
+      ])
       .select()
       .single();
 
@@ -82,16 +87,17 @@ router.post("/api/routines", requireAuthentication, async (req, res) => {
     // 2. Loop Exercises
     if (exercises && exercises.length > 0) {
       for (const [index, exercise] of exercises.entries()) {
-        
         // A. Insert Routine_Exercise Link
         const { data: routineExercise, error: reError } = await supabase
           .from("routine_exercises")
-          .insert([{
-            routine_id: routineId,
-            exercise_id: exercise.exercise_id, 
-            order_index: index,
-            notes: exercise.notes || ""
-          }])
+          .insert([
+            {
+              routine_id: routineId,
+              exercise_id: exercise.exercise_id,
+              order_index: index,
+              notes: exercise.notes || "",
+            },
+          ])
           .select()
           .single();
 
@@ -102,18 +108,22 @@ router.post("/api/routines", requireAuthentication, async (req, res) => {
           const setsPayload = exercise.sets.map((set, setIndex) => ({
             routine_exercise_id: routineExercise.id,
             set_index: setIndex,
-            set_type: set.set_type || 'normal',
+            set_type: set.set_type || "normal",
             target_reps: set.reps || 0,
-            target_weight_kg: set.weight_kg || 0
+            target_weight_kg: set.weight_kg || 0,
           }));
 
-          const { error: setsError } = await supabase.from("routine_sets").insert(setsPayload);
+          const { error: setsError } = await supabase
+            .from("routine_sets")
+            .insert(setsPayload);
           if (setsError) throw setsError;
         }
       }
     }
 
-    res.status(201).send({ message: "Routine created successfully", routine_id: routineId });
+    res
+      .status(201)
+      .send({ message: "Routine created successfully", routine_id: routineId });
   } catch (error) {
     console.error("Error creating routine:", error);
     res.status(500).send({ error: error.message || "Internal Server Error" });
@@ -123,10 +133,7 @@ router.post("/api/routines", requireAuthentication, async (req, res) => {
 router.delete("/api/routines/:id", requireAuthentication, async (req, res) => {
   const { id } = req.params;
   try {
-    const { error } = await supabase
-      .from("routines")
-      .delete()
-      .eq("id", id);
+    const { error } = await supabase.from("routines").delete().eq("id", id);
 
     if (error) throw error;
     res.status(200).send({ message: "Routine deleted successfully" });

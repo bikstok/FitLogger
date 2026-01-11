@@ -43,7 +43,11 @@ io.engine.use(sessionMiddleware);
 io.on("connection", async (socket) => {
   const userId = socket.request.session?.userId;
   if (userId) {
-    const { data } = await supabase.from("users").select("user_name").eq("id", userId).single();
+    const { data } = await supabase
+      .from("users")
+      .select("user_name")
+      .eq("id", userId)
+      .single();
     if (data) socket.data.username = data.user_name;
   }
 

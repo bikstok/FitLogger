@@ -1,8 +1,8 @@
 <script>
   import { navigate } from "svelte-routing";
   import toastr from "toastr";
-  import { loadSession } from '../../lib/stores/authStore.js';
-  import { fetchPost } from '../../util/fetchUtil.js';
+  import { loadSession } from "../../lib/stores/authStore.js";
+  import { fetchPost } from "../../util/fetchUtil.js";
 
   let email = "abekat@gmail.com";
   let password = "abekat123";
@@ -24,7 +24,6 @@
       await loadSession();
       navigate("/dashboard");
       toastr.success("Logged in!");
-
     } catch (err) {
       console.error(err);
       toastr.error("Network error");
@@ -43,7 +42,11 @@
 
     <label>
       Password:
-      <input type="password" bind:value={password} placeholder="Enter password" />
+      <input
+        type="password"
+        bind:value={password}
+        placeholder="Enter password"
+      />
     </label>
 
     <button type="submit">Login</button>

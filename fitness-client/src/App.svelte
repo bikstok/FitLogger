@@ -1,34 +1,38 @@
 <script>
   import { Router, Route } from "svelte-routing";
-  import { onMount } from 'svelte';
-  import { user, loadSession } from './lib/stores/authStore.js';
-  import { theme } from './lib/stores/themeStore.js';
-  import Register from './pages/Register/Register.svelte';
-  import Login from './pages/Login/Login.svelte'; 
-  import Dashboard from './pages/Dashboard/Dashboard.svelte';
-  import Exercises from './pages/Exercises/Exercises.svelte';
-  import Workouts from './pages/Workouts/Workouts.svelte';
-  import CreateRoutine from './pages/CreateRoutine/CreateRoutine.svelte';
-  import CreateWorkout from './pages/CreateWorkout/CreateWorkout.svelte';
-  import MyRoutines from './pages/MyRoutines/MyRoutines.svelte';
-  import Profile from './pages/Profile/Profile.svelte';
-  import PrivateRoute from './lib/PrivateRoute.svelte';
-  import Header from './lib/components/Header.svelte';
-  import toastr from 'toastr';
+  import { onMount } from "svelte";
+  import { user, loadSession } from "./lib/stores/authStore.js";
+  import { theme } from "./lib/stores/themeStore.js";
+  import Register from "./pages/Register/Register.svelte";
+  import Login from "./pages/Login/Login.svelte";
+  import Dashboard from "./pages/Dashboard/Dashboard.svelte";
+  import Exercises from "./pages/Exercises/Exercises.svelte";
+  import Workouts from "./pages/Workouts/Workouts.svelte";
+  import CreateRoutine from "./pages/CreateRoutine/CreateRoutine.svelte";
+  import CreateWorkout from "./pages/CreateWorkout/CreateWorkout.svelte";
+  import MyRoutines from "./pages/MyRoutines/MyRoutines.svelte";
+  import Profile from "./pages/Profile/Profile.svelte";
+  import PrivateRoute from "./lib/PrivateRoute.svelte";
+  import Header from "./lib/components/Header.svelte";
+  import toastr from "toastr";
   import io from "socket.io-client";
 
   let activeUsers = $state(0);
+
+  const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:8080";
 
   onMount(() => {
     loadSession();
     theme.init();
 
-    const socket = io("http://localhost:8080", {
-      withCredentials: true
+    const socket = io(BASE_URL, {
+      withCredentials: true,
     });
+
     socket.on("user_count", (count) => {
       activeUsers = count;
     });
+
     socket.on("workout_created", (data) => {
       if ($user?.id === data.user_id) return;
       toastr.info(`${data.username} just finished a workout: ${data.title}`);
@@ -104,10 +108,13 @@
     border-color: #374151;
     color: #e0e0e0;
   }
-  :global(body.dark-mode) h1, :global(body.dark-mode) h2, :global(body.dark-mode) h3 {
+  :global(body.dark-mode) h1,
+  :global(body.dark-mode) h2,
+  :global(body.dark-mode) h3 {
     color: #f3f4f6;
   }
-  :global(body.dark-mode) input, :global(body.dark-mode) select {
+  :global(body.dark-mode) input,
+  :global(body.dark-mode) select {
     background-color: #374151;
     border-color: #4b5563;
     color: white;

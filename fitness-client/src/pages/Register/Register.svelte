@@ -1,7 +1,7 @@
 <script>
   import { navigate } from "svelte-routing";
   import toastr from "toastr";
-  import { fetchPost } from '../../util/fetchUtil.js';
+  import { fetchPost } from "../../util/fetchUtil.js";
 
   let username = "";
   let email = "";
@@ -15,9 +15,9 @@
 
     try {
       const result = await fetchPost("/api/register", {
-          username,
-          email,
-          registerPassword: password
+        username,
+        email,
+        registerPassword: password,
       });
 
       if (result.error) {
@@ -29,7 +29,6 @@
       formReset();
 
       setTimeout(() => navigate("/login"), 1500);
-
     } catch (err) {
       console.error(err);
       toastr.error("Network error");
@@ -60,7 +59,11 @@
 
     <label>
       Password:
-      <input type="password" bind:value={password} placeholder="Enter password" />
+      <input
+        type="password"
+        bind:value={password}
+        placeholder="Enter password"
+      />
     </label>
 
     <button type="submit">Register</button>
