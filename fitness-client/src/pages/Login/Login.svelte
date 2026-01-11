@@ -2,6 +2,7 @@
   import { navigate } from "svelte-routing";
   import toastr from "toastr";
   import { loadSession } from '../../lib/stores/authStore.js';
+  import { fetchPost } from '../../util/fetchUtil.js';
 
   let email = "abekat@gmail.com";
   let password = "abekat123";
@@ -13,17 +14,10 @@
     }
 
     try {
-      const res = await fetch("http://localhost:8080/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-        credentials: "include",
-      });
+      const result = await fetchPost("/api/login", { email, password });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        toastr.error(data.error || "Login failed");
+      if (result.error) {
+        toastr.error(result.error || "Login failed");
         return;
       }
       // Refresh auth state so protected routes render immediately

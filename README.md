@@ -17,3 +17,5 @@ Work in progress Fitness Logging App.
 ### Use RequireAuth on routers
 
 Add gernal limtiter to app.js
+
+broadcast socket i main

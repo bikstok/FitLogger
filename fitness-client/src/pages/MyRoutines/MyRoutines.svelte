@@ -25,7 +25,6 @@
     });
 
     function startRoutine(routineId) {
-        // Navigate to CreateWorkout with the routine ID to pre-fill data
         navigate(`/create-workout?routineId=${routineId}`);
     }
 
