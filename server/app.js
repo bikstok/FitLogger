@@ -11,8 +11,6 @@ import { emitUserDisconnected, emitUserCount } from "./util/socketUtil.js";
 const app = express();
 app.use(express.json());
 
-const server = http.createServer(app);
-
 const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET,
   resave: false,
@@ -26,6 +24,7 @@ const sessionMiddleware = session({
 
 app.use(sessionMiddleware);
 
+const server = http.createServer(app);
 // Sockets
 import { Server } from "socket.io";
 const io = new Server(server, {
@@ -59,7 +58,7 @@ app.use((req, res, next) => {
   req.io = io;
   next();
 });
-
+  
 // CORS
 import cors from "cors";
 
