@@ -15,14 +15,14 @@
 	let selectedExercise = $state(null);
 	let chartCanvas;
 	let chartInstance;
-	let timeRange = $state("3m");
+	let timeRange = $state("3month");
 
 	const rangeOptions = [
-		{ value: "1w", label: "1W" },
-		{ value: "1m", label: "1M" },
-		{ value: "3m", label: "3M" },
-		{ value: "6m", label: "6M" },
-		{ value: "1y", label: "1Y" }
+		{ value: "1week", label: "1W" },
+		{ value: "1month", label: "1M" },
+		{ value: "3month", label: "3M" },
+		{ value: "6month", label: "6M" },
+		{ value: "1year", label: "1Y" }
 	];
 
 	$effect(() => {
@@ -69,7 +69,7 @@
 			return;
 		}
 		selectedExercise = exercise;
-		timeRange = "3m";
+		timeRange = "3month";
 		await tick();
 		loadChartData(exercise.id);
 	}
