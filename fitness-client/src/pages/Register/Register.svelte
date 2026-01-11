@@ -1,6 +1,7 @@
 <script>
   import { navigate } from "svelte-routing";
   import toastr from "toastr";
+  import { fetchPost } from '../../util/fetchUtil.js';
 
   let username = "";
   let email = "";
@@ -13,21 +14,14 @@
     }
 
     try {
-      const res = await fetch("http://localhost:8080/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const result = await fetchPost("/api/register", {
           username,
           email,
           registerPassword: password
-        }),
-        credentials: "include"
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        toastr.error(data.error || "Registration failed");
+      if (result.error) {
+        toastr.error(result.error || "Registration failed");
         return;
       }
 
