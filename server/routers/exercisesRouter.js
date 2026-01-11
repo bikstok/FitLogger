@@ -1,5 +1,6 @@
 import { Router } from "express";
 import supabase from "../util/supabaseUtil.js";
+import { requireAuthentication } from "../util/authUtil.js";
 
 const router = Router();
 
@@ -19,7 +20,7 @@ router.get("/api/exercises", async (req, res) => {
   }
 });
 
-router.post("/api/exercises", async (req, res) => {
+router.post("/api/exercises", requireAuthentication, async (req, res) => {
   const {
     name,
     equipment,

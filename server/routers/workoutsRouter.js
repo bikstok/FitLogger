@@ -4,11 +4,12 @@ import { calculateDuration, calculateTotalVolume } from "../util/workoutUtils.js
 import { emitWorkoutCreated } from "../util/socketUtil.js";
 import multer from "multer";
 import { importWorkoutsFromCsv } from "../util/importUtil.js";
+import { requireAuthentication } from "../util/authUtil.js";
 
 const upload = multer({ storage: multer.memoryStorage() });
 const router = Router();
 
-router.get("/api/workouts/:userId", async (req, res) => {
+router.get("/api/workouts/:userId", requireAuthentication, async (req, res) => {
   const { userId } = req.params;
   const limit = parseInt(req.query.limit) || 10;
   const offset = parseInt(req.query.offset) || 0;
@@ -47,7 +48,7 @@ router.get("/api/workouts/:userId", async (req, res) => {
   }
 });
 
-router.post("/api/workouts", async (req, res) => {
+router.post("/api/workouts", requireAuthentication, async (req, res) => {
   const {
     user_id, 
     title,
@@ -130,7 +131,7 @@ router.post("/api/workouts", async (req, res) => {
   }
 });
 
-router.post("/api/workouts/import", upload.single('file'), async (req, res) => {
+router.post("/api/workouts/import", requireAuthentication, upload.single('file'), async (req, res) => {
   const userId = req.body.user_id;
   
   if (!userId || !req.file) {
@@ -146,7 +147,7 @@ router.post("/api/workouts/import", upload.single('file'), async (req, res) => {
   }
 });
 
-router.delete("/api/workouts/:id", async (req, res) => {
+router.delete("/api/workouts/:id", requireAuthentication, async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -164,7 +165,7 @@ router.delete("/api/workouts/:id", async (req, res) => {
   }
 });
 
-router.delete("/api/workouts/all/:userId", async (req, res) => {
+router.delete("/api/workouts/all/:userId", requireAuthentication, async (req, res) => {
   const { userId } = req.params;
 
   try {

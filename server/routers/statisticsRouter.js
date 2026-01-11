@@ -1,10 +1,11 @@
 import { Router } from "express";
 import supabase from "../util/supabaseUtil.js";
 import { getStartDateForRange, generateTimeBuckets } from "../util/dateUtils.js";
+import { requireAuthentication } from "../util/authUtil.js";
 
 const router = Router();
 
-router.get("/api/stats/weekly-duration/:userId", async (req, res) => {
+router.get("/api/stats/weekly-duration/:userId", requireAuthentication, async (req, res) => {
   const { userId } = req.params;
   const { range = "3m" } = req.query;
 
@@ -40,7 +41,7 @@ router.get("/api/stats/weekly-duration/:userId", async (req, res) => {
   }
 });
 
-router.get("/api/stats/workout-frequency/:userId", async (req, res) => {
+router.get("/api/stats/workout-frequency/:userId", requireAuthentication, async (req, res) => {
   const { userId } = req.params;
   const { range = "3m" } = req.query;
 
@@ -73,7 +74,7 @@ router.get("/api/stats/workout-frequency/:userId", async (req, res) => {
   }
 });
 
-router.get("/api/stats/muscle-distribution/:userId", async (req, res) => {
+router.get("/api/stats/muscle-distribution/:userId", requireAuthentication, async (req, res) => {
   const { userId } = req.params;
   const { range = "3m" } = req.query;
   const startDate = getStartDateForRange(range);
@@ -115,7 +116,7 @@ router.get("/api/stats/muscle-distribution/:userId", async (req, res) => {
   }
 });
 
-router.get("/api/stats/heatmap/:userId", async (req, res) => {
+router.get("/api/stats/heatmap/:userId", requireAuthentication, async (req, res) => {
   const { userId } = req.params;
   
   // Fetch last ~1 year of data
@@ -145,7 +146,7 @@ router.get("/api/stats/heatmap/:userId", async (req, res) => {
   }
 });
 
-router.get("/api/stats/weekday-frequency/:userId", async (req, res) => {
+router.get("/api/stats/weekday-frequency/:userId", requireAuthentication, async (req, res) => {
   const { userId } = req.params;
   const { range = "1m" } = req.query;
   const startDate = getStartDateForRange(range);
@@ -176,7 +177,7 @@ router.get("/api/stats/weekday-frequency/:userId", async (req, res) => {
   }
 });
 
-router.get("/api/stats/exercise-progression/:userId/:exerciseId", async (req, res) => {
+router.get("/api/stats/exercise-progression/:userId/:exerciseId", requireAuthentication, async (req, res) => {
   const { userId, exerciseId } = req.params;
   const { range = "3m" } = req.query;
   const startDate = getStartDateForRange(range);

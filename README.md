@@ -14,4 +14,6 @@ Work in progress Fitness Logging App.
 
 ### Add upload profile picture
 
-### 
+### Use RequireAuth on routers
+
+Add gernal limtiter to app.js

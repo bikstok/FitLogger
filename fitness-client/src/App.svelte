@@ -47,12 +47,24 @@
     <PrivateRoute path="/dashboard" exact>
       <Dashboard />
     </PrivateRoute>
-    <Route path="/exercises"><Exercises /></Route>
-    <Route path="/workouts"><Workouts /></Route>
-    <Route path="/create-routine"><CreateRoutine /></Route>
-    <Route path="/create-workout"><CreateWorkout /></Route>
-    <Route path="/my-routines"><MyRoutines /></Route>
-    <Route path="/profile"><Profile /></Route>
+    <PrivateRoute path="/exercises">
+      <Exercises />
+    </PrivateRoute>
+    <PrivateRoute path="/workouts">
+      <Workouts />
+    </PrivateRoute>
+    <PrivateRoute path="/create-routine">
+      <CreateRoutine />
+    </PrivateRoute>
+    <PrivateRoute path="/create-workout">
+      <CreateWorkout />
+    </PrivateRoute>
+    <PrivateRoute path="/my-routines">
+      <MyRoutines />
+    </PrivateRoute>
+    <PrivateRoute path="/profile">
+      <Profile />
+    </PrivateRoute>
     <Route path="/login"><Login /></Route>
     <Route path="/register"><Register /></Route>
     <Route path="/" exact>

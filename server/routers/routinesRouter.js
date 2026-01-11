@@ -1,9 +1,10 @@
 import { Router } from "express";
 import supabase from "../util/supabaseUtil.js";
+import { requireAuthentication } from "../util/authUtil.js";
 
 const router = Router();
 
-router.get("/api/routines/:userId", async (req, res) => {
+router.get("/api/routines/:userId", requireAuthentication, async (req, res) => {
   const { userId } = req.params;
   try {
     const { data, error } = await supabase
@@ -26,7 +27,7 @@ router.get("/api/routines/:userId", async (req, res) => {
   }
 });
 
-router.get("/api/routines/detail/:id", async (req, res) => {
+router.get("/api/routines/detail/:id", requireAuthentication, async (req, res) => {
   const { id } = req.params;
   try {
     const { data, error } = await supabase
@@ -49,7 +50,7 @@ router.get("/api/routines/detail/:id", async (req, res) => {
   }
 });
 
-router.post("/api/routines", async (req, res) => {
+router.post("/api/routines", requireAuthentication, async (req, res) => {
   const {
     user_id,
     name,
@@ -119,7 +120,7 @@ router.post("/api/routines", async (req, res) => {
   }
 });
 
-router.delete("/api/routines/:id", async (req, res) => {
+router.delete("/api/routines/:id", requireAuthentication, async (req, res) => {
   const { id } = req.params;
   try {
     const { error } = await supabase

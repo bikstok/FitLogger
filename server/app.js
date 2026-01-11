@@ -5,6 +5,7 @@ import http from "http";
 import session from "express-session";
 import supabase from "./util/supabaseUtil.js";
 import { emitUserDisconnected, emitUserCount } from "./util/socketUtil.js";
+import generalLimiter from "./util/generalLimiterUtil.js";
 
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
 
@@ -23,6 +24,8 @@ const sessionMiddleware = session({
 });
 
 app.use(sessionMiddleware);
+
+app.use(generalLimiter);
 
 const server = http.createServer(app);
 // Sockets
